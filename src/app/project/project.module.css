@@ -1,0 +1,195 @@
+.button{
+    color: #cacaca;
+    border-radius: 0.75rem; 
+    width: 90%; 
+    margin-top: 0.56rem; 
+    border: 2px solid #000; /* Example border */
+    border-color: #333b42; /* Example border color */
+    overflow: hidden;
+    text-align: left; /* Align text to the left */
+    padding-left: 40px; /* Ensure space for the image */
+    background-image: url('../../../public/assets/list.png');
+    background-repeat: no-repeat;
+    background-position: 10px center; /* Adjust position as needed */
+    font-size: smaller;
+}
+
+.button:hover{
+    background-color: #29292b;
+}
+
+.option{
+    color: #cacaca;
+    border: 2px solid #000; /* Example border */
+    border-color: #333b42;
+    border-radius: 0.75rem; 
+    width: 70%; 
+    margin-top: 0.56rem; 
+    overflow: hidden;
+    text-align: left; /* Align text to the left */
+    padding-left: 40px; /* Ensure space for the image */
+    background-image: url('../../../public/assets/list.png');
+    background-repeat: no-repeat;
+    background-position: 10px center; /* Adjust position as needed */
+    font-size: smaller;
+}
+
+.net{
+    color: #cacaca;
+    border-radius: 0.75rem;  
+    background-color: #464646;
+    margin-top: 0.56rem;
+    width: 80%; 
+    overflow: hidden;
+    text-align: left; /* Align text to the left */
+    font-size: smaller;
+    padding-left: 40px;
+}
+
+.option:hover{
+    background-color: #5a5a5a;
+}
+
+.scrollbar::-webkit-scrollbar {
+    
+    width: 8px;
+    height: 8px;
+}
+
+.scrollbar::-webkit-scrollbar-track {
+    background: #2F2F2F;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb {
+    background: #1b1b1b;
+    border-radius: 10px;
+}
+
+.scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #4e4f50;
+}
+
+.zoonbutton{
+    color: #cacaca;
+    background-color: #181717;
+    border-radius: 0.75rem; 
+    width: 90%; 
+    margin-top: 0.56rem; 
+    border: none;
+    margin-right: 15px;
+    font-size: smaller;
+    text-align: center;
+}
+
+.zoonbutton:hover{
+    background-color: #5a5a5a;
+}
+
+.slider {
+    appearance: none;
+    width: 100%;
+    height: 5px;
+    border-radius: 5px;  
+    background:#cac4c47c;
+    outline: none;
+    opacity: 0.7;
+    transition: .2s;
+    transition: opacity .2s;
+}
+
+.slider::-webkit-slider-thumb {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    border-radius: 50%; 
+    background-color: #86a10b;
+    cursor: pointer;}
+
+.slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+
+.searchicon {
+    top: 55%;
+    width: 20px;
+    height: 20px;
+    margin-top: 6px;
+    margin-right: 6px;
+    background-image: url('../../../public/assets/Search.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: invert(93%) sepia(5%) saturate(49%) hue-rotate(336deg) brightness(85%) contrast(99%);
+}
+
+.neticon {
+    width: 30px;
+    margin-right: 6px;
+    height: 20px;
+    background-image: url('../../../public/assets/net.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: invert(56%) sepia(21%) saturate(7181%) hue-rotate(74deg) brightness(130%) contrast(90%);
+}
+
+.deleteicon {
+    width: 30px;
+    height: 20px;
+    margin-right: 10px;
+    background-image: url('../../../public/assets/delete.png');
+    background-repeat: no-repeat;
+    background-size: cover;
+    filter: invert(11%) sepia(83%) saturate(7489%) hue-rotate(15deg) brightness(98%) contrast(107%);
+}
+
+.zoomImage {
+    width: 24px; /* Ajusta el tamaño de la imagen según sea necesario */
+    height: 24px;
+}
+
+.zoomout {
+    background-image: url('../../../public/assets/zoomout.png'); /* URL de la imagen para zoom out */
+    margin-right: 8px; /* Espacio entre la imagen y el input */
+    filter: invert(93%) sepia(5%) saturate(49%) hue-rotate(336deg) brightness(85%) contrast(99%);
+}
+
+.zoomin {
+    background-image: url('../../../public/assets/zoomin.png'); /* URL de la imagen para zoom in */
+    margin-left: 8px; /* Espacio entre la imagen y el input */
+    filter: invert(93%) sepia(5%) saturate(49%) hue-rotate(336deg) brightness(85%) contrast(99%);
+}
+
+.add {
+    background-image: url('../../../public/assets/add.png'); /* URL de la imagen para zoom in */
+    margin-left: 8px; /* Espacio entre la imagen y el input */
+    filter: invert(93%) sepia(5%) saturate(49%) hue-rotate(336deg) brightness(85%) contrast(99%);
+}
+
+.common {
+    background-color: #030611;
+    margin-top: 0.5rem; /* Assuming the default line height is 1rem */
+    border-radius: 0.75rem; /* Assuming a base font-size and line-height */
+    border: 2px solid #000; /* Example border */
+    border-color: #333b42; /* Example border color */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+
+.netvlanoption {
+    border: 2px solid #000; /* Example border */
+    border-color: #2d3033;
+    margin-top: 0.75rem; /* Assuming the default line height is 1rem */
+    margin-left: 0.75rem; /* Assuming the default line height is 1rem */
+    margin-bottom: 0.75rem; /* Assuming the default line height is 1rem */
+    border-radius: 1.5rem; /* Assuming a base font-size and line-height */
+    display: flex;
+    align-items: center;
+    width: 90%;
+}
