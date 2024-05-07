@@ -34,8 +34,16 @@ export class canva extends Scene
         this.input.on('wheel', this.zoom, this);
 
         EventBus.on('addpc', () => {
-            this.addPc();
+            const isAnyPcBeingDragged = this.pc.some(pc => pc.isDragging); // Check if any PC is currently being dragged
+            if (!isAnyPcBeingDragged) {
+                this.addPc()
+            }
         });
+
+        this.input.on('pointerdown', this.componentProperties, this);
+
+
+
     }
 
     private zoom(pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) {
@@ -56,7 +64,22 @@ export class canva extends Scene
         console.log('addPc');
         const pc = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component'));
         this.pc.push(pc);
-        console.log(this.pc)
+        console.log('lenght:', this.pc.length)
+    }
+
+
+    private componentProperties(event: Phaser.Input.Pointer){
+        if (event.rightButtonDown()) {
+            console.log('triggering event')
+            console.log(event.worldX, event.worldY)
+            // Get the associated PC object
+            for (const pc of this.pc) {
+                // Check if the click coordinates are within the bounds of the PC image
+                if (pc.image.getBounds().contains(event.worldX, event.worldY)) {
+                    EventBus.emit('handle-property')
+                }
+            }
+        }
     }
 
 }

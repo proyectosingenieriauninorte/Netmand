@@ -108,7 +108,7 @@ export default function project() {
             <div className="flex flex-grow overflow-hidden mb-3">
                 <div className={`${styles.scrollbar} overflow-y-auto w-1/6`}>
                     {/* TOOLS */}
-                    <div id="tools" className="bg-[#030611] rounded-xl mt-3 ml-3">
+                    <div id="tools" className="bg-[#030611] rounded-xl mt-3 ml-3 h-full">
                         {/*************************************************************
                                                     COMPONENTS                      
                         *************************************************************/}
