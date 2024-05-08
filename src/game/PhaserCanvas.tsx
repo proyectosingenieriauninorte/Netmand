@@ -77,16 +77,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
         // Add event listener to a parent element that exists when the component mounts
         document.addEventListener('click', handlePcButtonClick);
         
-        EventBus.on('handle-property', () => {
-            if (game.current) {
-              // Create a new div element
-              const newDiv = document.createElement('div');
-              newDiv.id = 'my-new-div';
-              newDiv.className = 'absolute h-[50hv] bg-red-500 z-500';
-              // Append the new div to the canvas
-              if(game.current.canvas.parentElement){game.current.canvas.parentElement.appendChild(newDiv)};
-            }
-          });
+
         return () => {
             document.removeEventListener('click', handlePcButtonClick);
             window.removeEventListener('resize', handleCanvasResize);
@@ -95,7 +86,8 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     }, []);
 
     return (
-        <div id='canva-container' className='flex-grow overflow-auto'></div>
+        <div id='canva-container' className='flex-grow relative overflow-auto'></div>
     );
 
 });
+
