@@ -1,14 +1,14 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
 import { Pc } from '../classes/pc';
+import { PropertiesPanel } from '../managers/propertiesPanelManager';
 
 
 export class canva extends Scene
 {   
     private _zoom: number = 1;
     private pc: Pc[] = [];
-    private propertiesPanel: HTMLElement;
-    private propertiesPanelVisible: boolean = false;
+    private propertiesPanel = new PropertiesPanel(); // Make it static
 
 
     constructor ()
@@ -33,7 +33,6 @@ export class canva extends Scene
 
     create ()
     {
-        this.createPropertiesPanel();
         this.input.on('wheel', this.zoom, this);
 
         EventBus.on('addpc', () => {
@@ -61,7 +60,6 @@ export class canva extends Scene
     }
 
     private addPc() {
-        console.log('addPc');
         const pc = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component'));
         this.pc.push(pc);
         console.log('lenght:', this.pc.length)
@@ -69,44 +67,13 @@ export class canva extends Scene
 
     private componentProperties(event: Phaser.Input.Pointer){
         if (event.rightButtonDown()) {
-            console.log('triggering event');
-            console.log(event.worldX, event.worldY);
-            // Get the associated PC object
             for (const pc of this.pc) {
                 // Check if the click coordinates are within the bounds of the PC image
                 if (pc.image.getBounds().contains(event.worldX, event.worldY)) {
-                    this.propertiesPanelVisible = true;
-                    this.hidePropertiesPanel();
+                    this.propertiesPanel.hidePropertiesPanel(true)
                     EventBus.emit('handle-property');
                 }
             }
-        }
-    }
-
-    private createPropertiesPanel() {
-        const canvasContainer = document.getElementById('canva-container');
-        if (canvasContainer) {
-            this.propertiesPanel = document.createElement('div');
-            this.propertiesPanel.innerHTML = '<p>Properties Panel</p>';        
-            this.propertiesPanel.style.width = '1148px';
-            this.propertiesPanel.style.height = '851px';
-            this.propertiesPanel.style.padding = '0px';
-            this.propertiesPanel.style.marginRight = '0px';
-            this.propertiesPanel.style.marginBottom = '0px';
-            this.propertiesPanel.style.position = 'absolute';
-            this.propertiesPanel.style.overflow = 'hidden';
-            this.propertiesPanel.style.transform = 'scale(1, 1)';
-            this.propertiesPanel.style.transformOrigin = 'left top';
-            canvasContainer.insertBefore(this.propertiesPanel, canvasContainer.firstChild);
-            this.hidePropertiesPanel();
-        }
-    }
-
-    private hidePropertiesPanel() {
-        if (this.propertiesPanelVisible) {
-            this.propertiesPanel.style.display = 'block';
-        }else{
-            this.propertiesPanel.style.display = 'none';
         }
     }
 }

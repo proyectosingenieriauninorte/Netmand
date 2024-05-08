@@ -10,6 +10,7 @@ export class ImageManager {
         this.image = image;
         this.scene.input.on('pointermove', this.handlePointerMove, this);
         this.scene.input.on('pointerdown', this.handlePointerUp, this);
+        this.scene.input.on('drag', this.handleDrag, this);
     }
 
     private handlePointerMove(pointer: Phaser.Input.Pointer) {
@@ -21,6 +22,14 @@ export class ImageManager {
     private handlePointerUp(pointer: Phaser.Input.Pointer) {
         if (pointer.leftButtonDown()) { 
             this.isDragging = false;
+            this.image.setInteractive({ draggable: true })
+        }
+    }
+
+    private handleDrag(pointer: Phaser.Input.Pointer) {
+        if(this.image.getBounds().contains(pointer.worldX, pointer.worldY)){
+            this.image.x = pointer.worldX;
+            this.image.y = pointer.worldY;
         }
     }
 }
