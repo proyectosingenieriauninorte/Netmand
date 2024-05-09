@@ -6,9 +6,9 @@ import { PropertiesPanel } from '../managers/propertiesPanelManager';
 
 export class canva extends Scene
 {   
+    private propertiesPanel: HTMLElement;
     private _zoom: number = 1;
     private pc: Pc[] = [];
-    private propertiesPanel = new PropertiesPanel(); // Make it static
 
 
     constructor ()
@@ -32,8 +32,12 @@ export class canva extends Scene
     
 
     create ()
-    {
+    {   
+        this.setProperties('toolbox');
+        this.setProperties('properties-panel');
+
         this.input.on('wheel', this.zoom, this);
+        window.addEventListener('resize', this.updateDivsPositions.bind(this));
 
         EventBus.on('addpc', () => {
             const isAnyPcBeingDragged = this.pc.some(pc => pc.isDragging); // Check if any PC is currently being dragged
@@ -43,6 +47,7 @@ export class canva extends Scene
         });
 
         this.input.on('pointerdown', this.componentProperties, this);
+        this.updateDivsPositions();
     }
 
     private zoom(pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) {
@@ -70,10 +75,66 @@ export class canva extends Scene
             for (const pc of this.pc) {
                 // Check if the click coordinates are within the bounds of the PC image
                 if (pc.image.getBounds().contains(event.worldX, event.worldY)) {
-                    this.propertiesPanel.hidePropertiesPanel(true)
                     EventBus.emit('handle-property');
                 }
             }
         }
+    }
+
+    private setProperties(elementId: string) {
+        const element = document.getElementById(elementId);
+        if (element) {
+            element.style.display = 'flex';
+            element.style.justifyContent = 'center';
+            element.style.alignItems = 'center';
+            element.style.padding = '0px';
+            element.style.marginRight = '0px';
+            element.style.marginBottom = '0px';
+            element.style.position = 'absolute';
+            element.style.overflow = 'hidden';
+            element.style.transform = 'scale(1, 1)';
+        }
+    }
+
+    private updateToolBoxPosition() {
+        const element = document.getElementById('toolbox');
+        if (element) {
+            // Calculate the left position to center the element horizontally
+            const leftPosition =  (window.innerWidth / 2 - 100) + 'px';
+    
+            // Calculate the top position to align it at the top of the parent
+            const topPosition = (window.innerHeight - 59) + 'px';
+    
+            // Set the top and left position
+            element.style.top = topPosition;
+            element.style.left = leftPosition ;
+        }
+    }
+    
+
+    private updatePropertiesPosition() {
+        const element = document.getElementById('properties-panel');
+        if (element) {
+            const parentContainer = element.parentElement;
+            const parentWidth = this.game.canvas.clientWidth;
+            const parentHeight = this.game.canvas.clientHeight;
+            const elementWidth = element.clientWidth;
+            const elementHeight = element.clientHeight;
+    
+            // Calculate the left position to center the element horizontally
+            const leftPosition = (parentWidth - elementWidth) / 2;
+    
+            // Calculate the bottom position to align it at the bottom of the parent
+            const bottomPosition = parentHeight - elementHeight;
+    
+            // Set the bottom and left position
+            element.style.bottom = bottomPosition + 'px';
+            element.style.left = leftPosition + 'px';
+        }
+    }
+
+    private updateDivsPositions() {    
+        this.updateToolBoxPosition();
+        this.updatePropertiesPosition();
     }
 }
