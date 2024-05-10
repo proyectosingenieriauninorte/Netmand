@@ -2,34 +2,32 @@ import { Scene } from 'phaser';
 
 export class ImageManager {
     scene: Scene;
-    image: Phaser.GameObjects.Image ;
-    isDragging: boolean = true;
+    image: Phaser.GameObjects.Image;
+    isBeingAddedToCanvas: boolean = true;
+
+    private dragBox: Phaser.GameObjects.Graphics;
 
     constructor(scene: Scene, image: Phaser.GameObjects.Image) {
         this.scene = scene;
         this.image = image;
-        this.scene.input.on('pointermove', this.handlePointerMove, this);
-        this.scene.input.on('pointerdown', this.handlePointerUp, this);
-        this.scene.input.on('drag', this.handleDrag, this);
+
+        this.createDragBox();
+        this.scene.input.on('drag', this.handleDrag.bind(this));
     }
 
-    private handlePointerMove(pointer: Phaser.Input.Pointer) {
-        if (this.isDragging) {
-            this.image.setPosition(pointer.worldX, pointer.worldY);
-        }
+    private createDragBox() {
+        this.dragBox = this.scene.add.graphics();
+        this.dragBox.lineStyle(2, 0x000000, 1);
+        this.dragBox.strokeRect(this.image.x, this.image.y, this.image.width, this.image.height);
     }
+    
+    private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
+        // Update the position of the image
+        imageGameObject.x = dragX;
+        imageGameObject.y = dragY;
 
-    private handlePointerUp(pointer: Phaser.Input.Pointer) {
-        if (pointer.leftButtonDown()) { 
-            this.isDragging = false;
-            this.image.setInteractive({ draggable: true })
-        }
-    }
-
-    private handleDrag(pointer: Phaser.Input.Pointer) {
-        if(this.image.getBounds().contains(pointer.worldX, pointer.worldY)){
-            this.image.x = pointer.worldX;
-            this.image.y = pointer.worldY;
-        }
+        // Update the position of the drag box
+        this.dragBox.x = dragX - this.image.width / 2;
+        this.dragBox.y = dragY - this.image.height / 2;
     }
 }

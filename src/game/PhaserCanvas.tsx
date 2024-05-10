@@ -1,8 +1,6 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import StartGame from './main';
 import { EventBus } from './EventBus';
-import TabsDemo from './primitives/pcProperties';
-import ToolbarDemo from './primitives/toolbar/toolbar';
 
 const isSSR = () => typeof window === 'undefined'; 
 
@@ -89,12 +87,13 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
     return (
         <div id='canva-container' className='relative flex-grow overflow-auto'>
-            <div id='toolbox' className=''>
+            {/**<div id='toolbox' className=''>
                 <ToolbarDemo/>
             </div>
             <div id='properties-panel' className='absolute hidden'>
-                <TabsDemo/>
+            <TabsDemo/>
             </div>
+            **/}
         </div>
     );
 

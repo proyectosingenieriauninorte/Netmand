@@ -7,6 +7,7 @@ export class Pc extends ImageManager {
     y: number;
     identifier: number;
     image: Phaser.GameObjects.Image;
+    isBeingAddedToCanvas: boolean = true;
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
