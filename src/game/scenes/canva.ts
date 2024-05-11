@@ -1,43 +1,29 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
-import { Pc } from '../classes/pc';
-
+import { Pc, Switch } from '../components/netComponents';
 
 export class canva extends Scene
 {   
-    private propertiesPanel: HTMLElement;
     private _zoom: number = 1;
     private pc: Pc[] = [];
+    private switches: Switch[] = [];
     private isBeingAddedToCanvas: boolean = false;
 
 
-    constructor ()
-    {
-        super('canva');
-    }
+    constructor (){super('canva');}
 
-    init ()
-    {
+    init (){}
 
-    }
-
-    preload ()
-    {
-        //  Load the assets for the game - Replace with your own assets
+    preload (){
         this.load.setPath('assets');
         this.load.image('pc_component', 'pc.png');
+        this.load.image('switch_component', 'switch.png');
     }
 
-    
-
-    create ()
-    {   
-     
-
+    create (){   
         this.input.on('wheel', this.zoom, this);
-
-        EventBus.on('addpc', () => {this.addPc(); this.isBeingAddedToCanvas = true;});
-
+        EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
+        EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
     }
 
     private zoom(pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) {
@@ -54,38 +40,44 @@ export class canva extends Scene
         this.cameras.main.zoom = this._zoom;
     }
 
-    private addsPc() {
-        const isAnyPcBeingDragged = this.pc.some(pc => pc.isBeingAddedToCanvas)
-        if (isAnyPcBeingDragged) {
-            return;
+    private createComponent(component: string){
+
+        if(component === 'pc'){
+            const pc_ = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true }));
+            this.pc.push(pc_);
+            console.log('pcs', this.pc.length)
+            return pc_;
         }
-        const pc = new Pc(this, this.pc.length, this.add.image(-1000, -1000, 'pc_component'));
-        this.pc.push(pc);
-        console.log('lenght:', this.pc.length)
+
+        if(component === 'switch'){
+            const switch_ = new Switch(this, this.switches.length, this.add.image(0, 0, 'switch_component').setInteractive({ draggable: true }));
+            this.switches.push(switch_);
+            console.log('switches', this.switches.length)
+            return switch_;
+        }
     }
 
-    private addPc() {
+    private addComponent(component: string) {
         if (this.isBeingAddedToCanvas) {
             return;
         }
 
-        const pc = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true }));
+        const createdComponent = this.createComponent(component);
 
-        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
-            if (this.isBeingAddedToCanvas) {
-                pc.image.setPosition(pointer.worldX, pointer.worldY);
-            }
-        });
-
-        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            if (pointer.leftButtonDown()) {
-                this.isBeingAddedToCanvas = false;
-                pc.image.setInteractive({ draggable: true });
-                this.input.off('pointermove');
-                this.input.off('pointerdown');
-            }
-        });
-
-        this.pc.push(pc);
+        if(createdComponent){
+            this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+                if (this.isBeingAddedToCanvas) {
+                    createdComponent.image.setPosition(pointer.worldX, pointer.worldY);
+                }
+            });
+    
+            this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+                if (pointer.leftButtonDown()) {
+                    this.isBeingAddedToCanvas = false;
+                    this.input.off('pointermove');
+                    this.input.off('pointerdown');
+                }
+            });
+        }
     }
 }

@@ -64,22 +64,24 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
             }
         }
         
-        const handlePcButtonClick = (event: Event) => {
+        const handleComponentButtonClick = (event: Event) => {
             const target = event.target as HTMLElement;
             if (target.id === 'pc-btton') {
-                // Emit an event when the "pc-btton" button is clicked
-                EventBus.emit('addpc');
+                EventBus.emit('addPc');
+            }
+            if (target.id === 'switch-btton') {
+                EventBus.emit('addSwitch');
             }
         };
         
         window.addEventListener('resize', handleCanvasResize);
 
         // Add event listener to a parent element that exists when the component mounts
-        document.addEventListener('click', handlePcButtonClick);
+        document.addEventListener('click', handleComponentButtonClick);
         
 
         return () => {
-            document.removeEventListener('click', handlePcButtonClick);
+            document.removeEventListener('click', handleComponentButtonClick);
             window.removeEventListener('resize', handleCanvasResize);
         };
         

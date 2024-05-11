@@ -3,7 +3,6 @@ import { Scene } from 'phaser';
 export class ImageManager {
     scene: Scene;
     image: Phaser.GameObjects.Image;
-    isBeingAddedToCanvas: boolean = true;
 
     private dragBox: Phaser.GameObjects.Graphics;
 
@@ -13,12 +12,21 @@ export class ImageManager {
 
         this.createDragBox();
         this.scene.input.on('drag', this.handleDrag.bind(this));
+        this.scene.input.on('dragstart', this.startDrag.bind(this));
+        this.scene.input.on('dragend', () => {this.dragBox.setVisible(false)});
     }
 
     private createDragBox() {
         this.dragBox = this.scene.add.graphics();
-        this.dragBox.lineStyle(2, 0x000000, 1);
+        this.dragBox.lineStyle(2, 0x43A5F1, 1);
         this.dragBox.strokeRect(this.image.x, this.image.y, this.image.width, this.image.height);
+        this.dragBox.setVisible(false)
+    }
+
+    private startDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number){
+        this.dragBox.setVisible(true);
+        this.dragBox.x = dragX - this.image.width / 2;
+        this.dragBox.y = dragY - this.image.height / 2;
     }
     
     private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
@@ -30,4 +38,5 @@ export class ImageManager {
         this.dragBox.x = dragX - this.image.width / 2;
         this.dragBox.y = dragY - this.image.height / 2;
     }
+    
 }

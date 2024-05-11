@@ -7,81 +7,16 @@ const AppWithoutSSR = dynamic(() => import('./App'), { ssr: false });
 
 export default function project() {
 
-    const [showOptions, setShowOptions] = useState(false);
+    const [showPcOptions, setShowPCOptions] = useState(false);
+    const [showSwitchOptions, setShowSwitchOptions] = useState(false);
 
     // ***** PC OPTIONS *****
     const toggleComputerOptions = () => {
-        setShowOptions(!showOptions);
+        setShowPCOptions(!showPcOptions);
     };
 
-    // ***** NETWORK *****
-    const [showInput, setShowInput] = useState(false);
-    const [networks, setNetworks] = useState<string[]>([]);
-    const [network, setNetwork,] = useState('');
-
-    const handleAddNetwork = () => {
-        setShowInput(true);
-    };
-
-    const handleInputNetworkChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setNetwork(e.target.value);
-    };
-
-    const handleSaveNetwork = () => {
-        if (!isValidNetwork(network)) {
-            alert('La red no es válida');
-            return;
-        }
-        setNetworks([...networks, network]);
-        setNetwork('');
-        setShowInput(false);
-    };
-
-    const handleCancel = () => {
-        setShowInput(false);
-    };
-
-    const handleDelete = (index: integer) => {
-        const updatedNetworks = [...networks];
-        updatedNetworks.splice(index, 1);
-        setNetworks(updatedNetworks);
-    };
-
-    const isValidNetwork = (network: string) => {
-        // Expresión regular para validar redes con máscaras 8/16/24
-        const regex = /^(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(?:25[0-4]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.0(?:\/(?:8|16|24))?$/;
-    
-        return regex.test(network);
-    };
-
-    // ***** VLAN *****
-
-    const [showVlanInput, setShowVlanInput] = useState(false);
-    const [vlans, setVlans] = useState<string[]>([]);
-    const [vlan, setVlan,] = useState('');
-
-    const handleAddVlan = () => {
-        setShowVlanInput(true);
-    };
-
-    const handleInputVlanChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setVlan(e.target.value);
-    };
-
-    const handleSaveVlan = () => {
-        setVlans([...vlans, vlan]);
-        setVlan('');
-        setShowVlanInput(false);
-    };
-
-    const handleVlanCancel = () => {
-        setShowVlanInput(false);
-    };
-
-    const handlVlanDelete = (index: integer) => {
-        const updatedVlan = [...vlans];
-        updatedVlan.splice(index, 1);
-        setVlans(updatedVlan);
+    const toggleSwitchOptions = () => {
+        setShowSwitchOptions(!showSwitchOptions);
     };
 
 
@@ -119,13 +54,18 @@ export default function project() {
                                 <div className={`${styles.scrollbar} ml-3 overflow-y-auto`}>
                                     {/* Computer */}
                                     <button id='pc' className={styles.button} onClick={toggleComputerOptions}>Computadores</button>
-                                    {showOptions && (
+                                    {showPcOptions && (
                                     <div className="rounded-xl flex flex-col items-center w-full">
                                         <button id='pc-btton' className={styles.option}>PC</button>{/* Add more options as needed */}
                                     </div>
                                     )}
 
-                                    <button className={styles.button}>Switches</button>
+                                    <button className={styles.button} onClick={toggleSwitchOptions}>Switches</button>
+                                    {showSwitchOptions && (
+                                    <div className="rounded-xl flex flex-col items-center w-full">
+                                        <button id='switch-btton' className={styles.option}>PC</button>{/* Add more options as needed */}
+                                    </div>
+                                    )}
                                     <button className={styles.button}>Routers</button>
                                     <button className={`${styles.button} mb-3`}>Cables</button>
                                 </div>
