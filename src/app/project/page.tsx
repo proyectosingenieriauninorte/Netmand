@@ -9,6 +9,8 @@ export default function project() {
 
     const [showPcOptions, setShowPCOptions] = useState(false);
     const [showSwitchOptions, setShowSwitchOptions] = useState(false);
+    const [showCableOptions, setShowCableOptions] = useState(false);
+    const [showRouterOptions, setShowRouterOptions] = useState(false);
 
     // ***** PC OPTIONS *****
     const toggleComputerOptions = () => {
@@ -19,9 +21,18 @@ export default function project() {
         setShowSwitchOptions(!showSwitchOptions);
     };
 
+    const toggleCableOptions = () => {
+        setShowCableOptions(!showCableOptions);
+    };
+
+    const toggleRouterOptions = () => {
+        setShowRouterOptions(!showRouterOptions);
+    };
+
 
     return (
         <main className="h-screen flex flex-col">
+
             <nav className="border-2 border-[#525362] p-0.5 rounded-xl mx-3 mt-3">
                 <div className="flex">
                 {/* PROYECTO, EDITAR, GUARDAR, SIMULAR */}
@@ -63,11 +74,23 @@ export default function project() {
                                     <button className={styles.button} onClick={toggleSwitchOptions}>Switches</button>
                                     {showSwitchOptions && (
                                     <div className="rounded-xl flex flex-col items-center w-full">
-                                        <button id='switch-btton' className={styles.option}>PC</button>{/* Add more options as needed */}
+                                        <button id='switch-btton' className={styles.option}>switch</button>{/* Add more options as needed */}
                                     </div>
                                     )}
-                                    <button className={styles.button}>Routers</button>
-                                    <button className={`${styles.button} mb-3`}>Cables</button>
+
+                                    <button className={styles.button} onClick={toggleRouterOptions}>Routers</button>
+                                    {showRouterOptions && (
+                                    <div className="rounded-xl flex flex-col items-center w-full">
+                                        <button id='router-btton' className={styles.option}>Router</button>{/* Add more options as needed */}
+                                    </div>
+                                    )}
+
+                                    <button className={`${styles.button} mb-3`} onClick={toggleCableOptions}>Cables</button>
+                                    {showCableOptions && (
+                                    <div className="rounded-xl flex flex-col items-center w-full">
+                                        <button id='cable-btton' className={styles.option}>cable</button>{/* Add more options as needed */}
+                                    </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

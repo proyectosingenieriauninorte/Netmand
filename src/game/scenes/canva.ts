@@ -1,14 +1,16 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
-import { Pc, Switch } from '../components/netComponents';
+import { Pc, Switch, Cable, Router} from '../components/netComponents';
 
 export class canva extends Scene
 {   
     private _zoom: number = 1;
     private pc: Pc[] = [];
     private switches: Switch[] = [];
+    private routers: Router[] = [];
+    private cables: Cable[] = [];
     private isBeingAddedToCanvas: boolean = false;
-
+    private cableStartType: Pc | Switch | Router | undefined;
 
     constructor (){super('canva');}
 
@@ -18,26 +20,147 @@ export class canva extends Scene
         this.load.setPath('assets');
         this.load.image('pc_component', 'pc.png');
         this.load.image('switch_component', 'switch.png');
+        this.load.image('router_component', 'router.png');
     }
 
     create (){   
         this.input.on('wheel', this.zoom, this);
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
+        EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
+        EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
     }
 
     private zoom(pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) {
-        
         let newZoom: number;
         if (deltaY < 0) {
             newZoom = this._zoom * 1.1; // zoom in
         } else {
             newZoom = this._zoom / 1.1; // zoom out
         }
-
-        // zoom limits
         this._zoom = Phaser.Math.Clamp(newZoom, 0.6, 2);
         this.cameras.main.zoom = this._zoom;
+    }
+
+    private addCable() {
+        if (this.isBeingAddedToCanvas) {
+            return;
+        }
+    
+        const createCable = (pointer: Phaser.Input.Pointer) => {
+
+            const pcUnderPointer = this.pc.find(pc => pc.image.getBounds().contains(pointer.worldX, pointer.worldY));
+            const switchUnderPointer = this.switches.find(switch_ => switch_.image.getBounds().contains(pointer.worldX, pointer.worldY));
+            const routerUnderPointer = this.routers.find(router => router.image.getBounds().contains(pointer.worldX, pointer.worldY));
+            
+            if (!this.cableStartType) { // STARTING POINT    
+                const component = pcUnderPointer || switchUnderPointer || routerUnderPointer;
+                if (component) {
+                    if (component instanceof Pc && component.connected === true) {
+                        console.log('Pc already connected');
+                        return;
+                    }
+                    this.cableStartType = component;
+                    const cable = new Cable(this, { x: component.image.x, y: component.image.y });
+                    this.cables.push(cable);
+                    cable.startComponent = component;
+                    console.log(this.cables.length);
+                    if (component instanceof Pc) {
+                        this.setComponentConnected(component);
+                    }
+                    this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+                        cable.EndCoordinates({ x: pointer.worldX, y: pointer.worldY });
+                    });
+                }
+            } else { // ENDING POINT
+                const component = pcUnderPointer || switchUnderPointer || routerUnderPointer;
+                if (component && component !== this.cableStartType) { // Check if it's not the same component
+                    const lastCable = this.cables[this.cables.length - 1];
+
+                    // a pc cannot be connected to a router
+                    if (lastCable.startComponent instanceof Pc && component instanceof Router 
+                        || lastCable.startComponent instanceof Router && component instanceof Pc
+                    ) {
+                        console.log('Cannot connect a pc to a router');
+                        this.quitCableAdding(lastCable);
+                        return;
+                    }
+
+                    // a switch cannot be connected to another switch
+                    if (lastCable.startComponent instanceof Switch && component instanceof Switch) {
+                        console.log('Cannot connect a switch to another switch');
+                        this.quitCableAdding(lastCable);
+                        return;
+                    }   
+
+                    // a pc cannot be connected to another pc or a pc that is already connected
+                    if (lastCable.startComponent instanceof Pc && component instanceof Pc || 
+                        component instanceof Pc && component.connected === true) {
+                        console.log('Cannot connect a pc to another pc');
+                        this.quitPcConnection(lastCable);
+                        this.quitCableAdding(lastCable);
+                        return;
+                    }
+
+                    // Check if the component is a router, pc or switch and if it has available ports
+                    if ((component instanceof Router || component instanceof Switch || component instanceof Pc) 
+                        && this.checkAvailablePorts(component)) {
+                        // Connect the cable only if there are available ports
+                        if (lastCable) {
+                            lastCable.EndCoordinates({ x: component.image.x, y: component.image.y });
+                            lastCable.endComponent = component;
+                            lastCable.stopAnimation();
+                            this.isBeingAddedToCanvas = false;
+                            this.cableStartType = undefined;
+                            this.input.off('pointermove');
+                            this.input.off('pointerdown', createCable);
+                        }
+                        this.setComponentConnected(component);
+                        // Increment port index for the next connection (applicable only for routers)
+                    } else {
+                        // Handle the case where there are no available ports
+                        console.log('No available ports on the router or switch.');
+                    }
+                }
+            }
+        };
+        this.input.on('pointerdown', createCable);
+    }
+
+    private quitPcConnection(cable: Cable) {
+        console.log('quitComponentConnection');
+        if (cable.startComponent instanceof Pc) {
+            cable.startComponent.connected = false;
+        }
+        if (cable.endComponent instanceof Pc) {
+            cable.endComponent.connected = false;
+        }
+    }
+    
+    private setComponentConnected(component: Pc | Switch | Router) {
+        if (component instanceof Pc) {
+            console.log('is a pc');
+            component.connected = true;
+        }
+    }
+
+    private quitCableAdding(cable: Cable) {
+        const index = this.cables.indexOf(cable);
+        if (index !== -1) {
+            this.cables.splice(index, 1);
+        }
+        cable.destroy();
+        this.isBeingAddedToCanvas = false;
+        this.cableStartType = undefined;
+        this.input.off('pointermove');
+        this.input.off('pointerdown');
+    }
+    
+    private checkAvailablePorts(component: Router | Switch | Pc) {
+        if (component instanceof Pc) {
+            return true;
+        }
+        return component.ports.some(port => port === null);
     }
 
     private createComponent(component: string){
@@ -55,22 +178,27 @@ export class canva extends Scene
             console.log('switches', this.switches.length)
             return switch_;
         }
+
+        if(component === 'router'){
+            const router_ = new Router(this, this.routers.length, this.add.image(0, 0, 'router_component').setInteractive({ draggable: true }));
+            this.routers.push(router_);
+            console.log('routers', this.routers.length)
+            return router_;
+        }
+
     }
 
     private addComponent(component: string) {
         if (this.isBeingAddedToCanvas) {
             return;
         }
-
         const createdComponent = this.createComponent(component);
-
         if(createdComponent){
             this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
                 if (this.isBeingAddedToCanvas) {
                     createdComponent.image.setPosition(pointer.worldX, pointer.worldY);
                 }
             });
-    
             this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
                 if (pointer.leftButtonDown()) {
                     this.isBeingAddedToCanvas = false;

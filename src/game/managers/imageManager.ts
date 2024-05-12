@@ -1,6 +1,7 @@
 import { Scene } from 'phaser';
+import { Cable } from '../components/netComponents';
 
-export class ImageManager {
+export class ImageManager{
     scene: Scene;
     image: Phaser.GameObjects.Image;
 
@@ -24,19 +25,23 @@ export class ImageManager {
     }
 
     private startDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number){
-        this.dragBox.setVisible(true);
-        this.dragBox.x = dragX - this.image.width / 2;
-        this.dragBox.y = dragY - this.image.height / 2;
+        if (imageGameObject === this.image) {
+            this.dragBox.setVisible(true);
+            this.dragBox.x = dragX - this.image.width / 2;
+            this.dragBox.y = dragY - this.image.height / 2;
+        }
     }
     
     private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
-        // Update the position of the image
-        imageGameObject.x = dragX;
-        imageGameObject.y = dragY;
+        if (imageGameObject === this.image) {// Update the position of the image
+            imageGameObject.x = dragX;
+            imageGameObject.y = dragY;
 
-        // Update the position of the drag box
-        this.dragBox.x = dragX - this.image.width / 2;
-        this.dragBox.y = dragY - this.image.height / 2;
+            // Update the position of the drag box
+            this.dragBox.x = dragX - this.image.width / 2;
+            this.dragBox.y = dragY - this.image.height / 2;
+        }
     }
-    
 }
+
+

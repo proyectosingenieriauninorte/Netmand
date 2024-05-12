@@ -2,8 +2,6 @@ import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import StartGame from './main';
 import { EventBus } from './EventBus';
 
-const isSSR = () => typeof window === 'undefined'; 
-
 export interface IRefPhaserGame
 {
     game: Phaser.Game | null;
@@ -71,6 +69,12 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
             }
             if (target.id === 'switch-btton') {
                 EventBus.emit('addSwitch');
+            }
+            if (target.id === 'cable-btton') {
+                EventBus.emit('addCable');
+            }
+            if (target.id === 'router-btton') {
+                EventBus.emit('addRouter');
             }
         };
         
