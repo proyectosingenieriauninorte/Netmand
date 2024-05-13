@@ -31,10 +31,11 @@ export class Pc extends ImageManager {
 
     private updateTextPosition() {
         const x = this.image.x;
-        const y = this.image.y + this.image.height / 2;
+        const y = this.image.y + this.image.height / 2 - 10;
         if (this.text.x !== x || this.text.y !== y) {
             this.text.x = x;
             this.text.y = y;
+            this.scene.children.bringToTop(this.text);
         }
     }
 }
@@ -74,6 +75,7 @@ export class Switch extends ImageManager {
         if (this.text.x !== x || this.text.y !== y) {
             this.text.x = x;
             this.text.y = y;
+            this.scene.children.bringToTop(this.text);
         }
     }
 
@@ -135,10 +137,32 @@ export class Router extends ImageManager {
         if (this.text.x !== x || this.text.y !== y) {
             this.text.x = x;
             this.text.y = y;
+            this.scene.children.bringToTop(this.text);
         }
     }
-}
 
+    // Method to connect an object to a port
+    public connectToPort(portIndex: number, object: Router | Switch) {
+        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
+            this.ports[portIndex] = object;
+        }
+    }
+
+    // Method to disconnect an object from a port
+    public disconnectFromPort(portIndex: number) {
+        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
+            this.ports[portIndex] = null;
+        }
+    }
+
+    // Method to get the object connected to a port
+    public getObjectConnectedToPort(portIndex: number): Router | Switch | null {
+        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
+            return this.ports[portIndex];
+        }
+        return null;
+    }
+}
 
 export class Cable{
     scene: Scene;

@@ -29,7 +29,159 @@ export class canva extends Scene
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
+
+        // Delete component on key press
+        this.input.keyboard?.on('keydown-BACKSPACE', () => {
+            console.log('delete');
+            this.pc.forEach(pc => {
+                if (pc.image.getBounds().contains(this.input.activePointer.worldX, this.input.activePointer.worldY)) {
+                    console.log('delete pc');
+                    this.removeComponent(pc);
+                }
+            });
+            this.switches.forEach(switch_ => {
+                if (switch_.image.getBounds().contains(this.input.activePointer.worldX, this.input.activePointer.worldY)) {
+                    this.removeComponent(switch_);
+                }
+            });
+            this.routers.forEach(router => {
+                if (router.image.getBounds().contains(this.input.activePointer.worldX, this.input.activePointer.worldY)) {
+                    this.removeComponent(router);
+                }
+            });
+        });
     }
+
+    /******************************************************************
+     * 
+                        ** REMOVE COMPONENTS **
+
+    ********************************************************************/
+
+    private removeComponent(component: Pc | Switch | Router) {
+        if (component instanceof Pc) {
+            const index = this.pc.indexOf(component);
+            if (index !== -1) {
+                this.destroyComponentGraphics(component);
+                this.removeCable(component);
+                this.pc.splice(index, 1);
+            }
+            return;
+        }
+        if (component instanceof Switch) {
+            const index = this.switches.indexOf(component);
+            if (index !== -1) {
+                this.destroyComponentGraphics(component);
+                this.removeCable(component);
+                this.switches.splice(index, 1);
+                this.updateConnectedStatus(component);
+            }
+            return;
+        }
+        if (component instanceof Router) {
+            const index = this.routers.indexOf(component);
+            if (index !== -1) {
+                this.destroyComponentGraphics(component);
+                this.removeCable(component);
+                this.routers.splice(index, 1);
+            }
+            return;
+        }
+    }
+
+    private destroyComponentGraphics(component: Pc | Switch | Router) {   
+        component.image.destroy();
+        component.dragBox.destroy();
+        component.clickbox.destroy();
+        component.text.destroy();
+    }
+
+    private removeCable(component: Pc | Switch | Router) {
+        this.cables.forEach(cable => {
+            if (cable.startComponent === component || cable.endComponent === component) {
+                const index = this.cables.indexOf(cable);
+                if (index !== -1) {
+                    cable.destroy();
+                    this.cables.splice(index, 1);
+                    this.updateConnectedStatus(component);
+                }
+                console.log('cables', this.cables.length);
+            }
+        });
+    }
+
+    private updateConnectedStatus(component: Pc | Switch | Router) {
+        
+        // If the component is pc, update the switch available ports
+        if (component instanceof Pc) {
+            this.switches.forEach(switch_ => {
+                switch_.ports.forEach((port, index) => {
+                    if (port === component) {
+                        switch_.disconnectFromPort(index);
+                        return;
+                    }
+                });
+            });
+        }
+
+        /* If the component is switch:
+        if there are pc connected to it, update the pc connected status
+        if there are routers connected to it, update the router available ports
+         */
+
+        if (component instanceof Switch) {
+            console.log('removing switch')
+            // Update PCs connected to the removed switch
+            component.ports.forEach((port, index) => {
+                if (port instanceof Pc) {
+                    port.connected = false;
+                }
+            });
+            // Update the switch available ports for connected routers
+            this.routers.forEach(router => {
+                router.ports.forEach((port, index) => {
+                    if (port === component) {
+                        router.disconnectFromPort(index);
+                        return;
+                    }
+                });
+            });
+        }
+        /* If the component is router:
+        if there are switches connected to it, update the switch available ports
+        if there are routers connected to it, update the router available ports
+         */
+
+        if (component instanceof Router) {
+            // Update the switch available ports for connected switches
+            this.switches.forEach(switch_ => {
+                switch_.ports.forEach((port, index) => {
+                    if (port instanceof Router && port === component) {
+                        switch_.disconnectFromPort(index);
+                        return;
+                    }
+                });
+            });
+    
+            // Update the router available ports for connected routers
+            this.routers.forEach(router => {
+                router.ports.forEach((port, index) => {
+                    if (port === component) {
+                        router.disconnectFromPort(index);
+                        return;
+                    }
+                });
+            });
+        }
+    }
+
+
+
+    /******************************************************************
+
+                                ** ZOOM **
+
+    ********************************************************************/
 
     private zoom(pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) {
         let newZoom: number;
@@ -41,6 +193,13 @@ export class canva extends Scene
         this._zoom = Phaser.Math.Clamp(newZoom, 0.6, 2);
         this.cameras.main.zoom = this._zoom;
     }
+
+    
+    /******************************************************************
+     * 
+                        ** ADD CABLES **
+
+    ********************************************************************/
 
     private addCable() {
         if (this.isBeingAddedToCanvas) {
@@ -163,6 +322,12 @@ export class canva extends Scene
         return component.ports.some(port => port === null);
     }
 
+     /******************************************************************
+     * 
+                        ** ADD COMPONENTS **
+
+    ********************************************************************/
+
     private createComponent(component: string){
 
         if(component === 'pc'){
@@ -208,4 +373,15 @@ export class canva extends Scene
             });
         }
     }
+
+    
+
+    
 }
+
+
+
+
+
+
+
