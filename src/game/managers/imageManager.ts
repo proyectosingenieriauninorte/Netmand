@@ -68,7 +68,6 @@ export class ImageManager{
 
     private clickBox(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image) {
         if(pointer.leftButtonDown()) {
-            console.log('click');
             this.clickbox.setVisible(true);
             this.updateClickBox(pointer);
         }

@@ -24,7 +24,10 @@ export class canva extends Scene
     }
 
     create (){   
+
         this.input.on('wheel', this.zoom, this);
+        //this.input.on('pointerdown', this.componentDropMenu.bind(this));
+
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
@@ -50,6 +53,7 @@ export class canva extends Scene
                 }
             });
         });
+
     }
 
     /******************************************************************
@@ -322,7 +326,7 @@ export class canva extends Scene
         return component.ports.some(port => port === null);
     }
 
-     /******************************************************************
+    /******************************************************************
      * 
                         ** ADD COMPONENTS **
 
@@ -368,15 +372,17 @@ export class canva extends Scene
                 if (pointer.leftButtonDown()) {
                     this.isBeingAddedToCanvas = false;
                     this.input.off('pointermove');
-                    this.input.off('pointerdown');
                 }
             });
         }
     }
 
-    
 
-    
+    /******************************************************************
+     * 
+                        ** Overlay Div Properties **
+
+    ********************************************************************/
 }
 
 

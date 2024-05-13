@@ -15,6 +15,7 @@ const config: Phaser.Types.Core.GameConfig = {
     audio: {
         noAudio: true,
     },
+    disableContextMenu: true,
 };
 
 const StartGame = (parent: string) => {

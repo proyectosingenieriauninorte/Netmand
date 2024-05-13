@@ -49,7 +49,7 @@ export class Switch extends ImageManager {
     vlan: string = '';
     connectedPcs: Pc[] = [];
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-    ports: (Pc | Switch | null)[];
+    ports: (Pc | Router | null)[];
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
@@ -80,7 +80,7 @@ export class Switch extends ImageManager {
     }
 
     // Method to connect an object to a port
-    public connectToPort(portIndex: number, object: Pc | Switch) {
+    public connectToPort(portIndex: number, object: Pc | Router) {
         if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
             this.ports[portIndex] = object;
         }
@@ -94,7 +94,7 @@ export class Switch extends ImageManager {
     }
 
     // Method to get the object connected to a port
-    public getObjectConnectedToPort(portIndex: number): Pc | Switch | null {
+    public getObjectConnectedToPort(portIndex: number): Pc | Router | null {
         if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
             return this.ports[portIndex];
         }

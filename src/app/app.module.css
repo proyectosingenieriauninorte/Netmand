@@ -1,0 +1,84 @@
+.logo {
+    display: flex; /* Muestra los elementos en línea */
+    align-items: center; /* Alinea los elementos verticalmente en el centro */
+    width: 120px;  
+    height: 120px;  
+    background-image: url("../../public/assets/Logo.png");
+    background-size: contain;  
+    background-repeat: no-repeat;  
+}
+.img{
+  width: 100%; /* Same as w-full */
+  height: 24px; /* Adjust the height as needed */
+  object-fit: cover; /* Same as object-cover */
+  border-radius: 4px 4px 0 0; /* Rounded corners for the top only */
+  background-image: url("../../public/assets/Logo.png");
+}
+/* styles.module.css */
+
+/* Botones */
+.primaryButton {
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+  background-color: #0ea5e9;
+  border-color: #0ea5e9;
+  border-width: 4px;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.primaryButton:hover {
+  background-color: #0284c7;
+  border-color: #0284c7;
+}
+
+.secondaryButton {
+  margin-left: 0.4rem;
+  flex-shrink: 0;
+  background-color: #6b7280;
+  border-color: #6b7280;
+  border-width: 4px;
+  color: white;
+  padding: 0.5rem 1.5rem;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.secondaryButton:hover {
+  background-color: #4b5563;
+  border-color: #4b5563;
+}
+
+/* Formularios */
+.input {
+  appearance: none;
+  display: block;
+  width: 100%;
+  background-color: #475569;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.input:focus {
+  outline: none;
+  background-color: #64748b;
+}
+
+/* Navegación */
+.navLink {
+  display: flex;
+  align-items: center;
+  margin-top: 20%;
+  padding: 1rem 1rem;
+  border-radius: 0.5rem;
+  color: #cbd5e1;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.navLink:hover {
+  background-color: #334155;
+}

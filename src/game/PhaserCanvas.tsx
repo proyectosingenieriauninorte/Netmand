@@ -93,6 +93,21 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
     return (
         <div id='canva-container' className='relative flex-grow overflow-auto'>
+            <div id='properties-panel' className='absolute hidden' style={{
+            display: 'block',
+            width: '1125px',
+            height: '851px',
+            padding: '0px',
+            marginRight: '0px', // Note: camelCase for CSS properties in JSX
+            marginBottom: '0px', // Note: camelCase for CSS properties in JSX
+            position: 'absolute',
+            overflow: 'hidden',
+            pointerEvents: 'none', // Note: camelCase for CSS properties in JSX
+            transform: 'scale(1, 1)',
+            transformOrigin: 'left top' // Note: camelCase for CSS properties in JSX
+        }}>
+            <input type='button' id='pc-btton' value='PC'/>
+        </div>
             {/**<div id='toolbox' className=''>
                 <ToolbarDemo/>
             </div>
