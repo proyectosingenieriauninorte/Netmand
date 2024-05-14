@@ -237,8 +237,8 @@ export class canva extends Scene
                 }
             } else { // ENDING POINT
                 const component = pcUnderPointer || switchUnderPointer || routerUnderPointer;
+                const lastCable = this.cables[this.cables.length - 1];
                 if (component && component !== this.cableStartType) { // Check if it's not the same component
-                    const lastCable = this.cables[this.cables.length - 1];
 
                     // a pc cannot be connected to a router
                     if (lastCable.startComponent instanceof Pc && component instanceof Router 
@@ -260,7 +260,7 @@ export class canva extends Scene
                     if (lastCable.startComponent instanceof Pc && component instanceof Pc || 
                         component instanceof Pc && component.connected === true) {
                         console.log('Cannot connect a pc to another pc');
-                        this.quitPcConnection(lastCable);
+                        this.quitComponentConnections(lastCable);
                         this.quitCableAdding(lastCable);
                         return;
                     }
@@ -284,19 +284,70 @@ export class canva extends Scene
                         // Handle the case where there are no available ports
                         console.log('No available ports on the router or switch.');
                     }
+                }else{
+                    // Handle the case where the component is the same as the starting component or the cable is not connected to anything
+                    console.log('could not connect to anything or the same component');
+                    this.isBeingAddedToCanvas = false;
+                    this.cableStartType = undefined;
+                    this.quitComponentConnections(lastCable);
+                    this.quitCableAdding(lastCable);
+                    this.input.off('pointermove');
+                    this.input.off('pointerdown', createCable);
                 }
             }
         };
         this.input.on('pointerdown', createCable);
     }
 
-    private quitPcConnection(cable: Cable) {
-        console.log('quitComponentConnection');
-        if (cable.startComponent instanceof Pc) {
-            cable.startComponent.connected = false;
+    private quitComponentConnections(cable: Cable) {
+
+        const startComponent = cable.startComponent;
+        const endComponent = cable.endComponent;
+        
+        if (startComponent){
+
+            if (startComponent instanceof Pc) {
+                startComponent.connected = false;
+            }
+
+            if (startComponent instanceof Switch) {
+                startComponent.ports.forEach((port, index) => {
+                    if (port === endComponent) {
+                        startComponent.disconnectFromPort(index);
+                    }
+                });
+            }
+
+            if (startComponent instanceof Router) {
+                startComponent.ports.forEach((port, index) => {
+                    if (port === endComponent) {
+                        startComponent.disconnectFromPort(index);
+                    }
+                });
+            }
         }
-        if (cable.endComponent instanceof Pc) {
-            cable.endComponent.connected = false;
+
+        if (endComponent){
+
+            if (endComponent instanceof Pc) {
+                endComponent.connected = false;
+            }
+
+            if (endComponent instanceof Switch) {
+                endComponent.ports.forEach((port, index) => {
+                    if (port === startComponent) {
+                        endComponent.disconnectFromPort(index);
+                    }
+                });
+            }
+
+            if (endComponent instanceof Router) {
+                endComponent.ports.forEach((port, index) => {
+                    if (port === startComponent) {
+                        endComponent.disconnectFromPort(index);
+                    }
+                });
+            }
         }
     }
     
