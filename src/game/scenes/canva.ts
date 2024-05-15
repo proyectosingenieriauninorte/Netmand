@@ -219,6 +219,7 @@ export class canva extends Scene
             if (!this.cableStartType) { // STARTING POINT    
                 const component = pcUnderPointer || switchUnderPointer || routerUnderPointer;
                 if (component) {
+                    component.displayPorts(pointer);
                     if (component instanceof Pc && component.connected === true) {
                         console.log('Pc already connected');
                         return;

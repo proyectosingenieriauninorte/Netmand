@@ -1,5 +1,7 @@
 import { Scene } from 'phaser';
 import { ImageManager } from '../managers/imageManager';
+import { EventBus } from '../EventBus';
+
 
 export class Pc extends ImageManager {
     scene: Scene;
@@ -38,6 +40,15 @@ export class Pc extends ImageManager {
             this.scene.children.bringToTop(this.text);
         }
     }
+
+    public displayPorts(pointer: Phaser.Input.Pointer) { 
+        const camera = this.scene.cameras.main;
+        const localX = (this.image.x - camera.worldView.x) - this.image.width / 2;
+        const localY = (this.image.y - camera.worldView.y) - this.image.height / 2;
+        const width = this.image.width;
+        const height = this.image.height;
+        EventBus.emit('displayPorts', localX, localY, width, height, 'Pc');
+    }
 }
 
 export class Switch extends ImageManager {
@@ -58,6 +69,7 @@ export class Switch extends ImageManager {
         this.image = image;
         this.ports = new Array(24).fill(null);
         this.addText();
+
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
     }
 
@@ -100,6 +112,18 @@ export class Switch extends ImageManager {
         }
         return null;
     }
+
+    public displayPorts(pointer: Phaser.Input.Pointer) {
+    
+        console.log('Right click');
+        const x = this.image.x - this.image.width / 2;
+        const y = this.image.y - this.image.height / 2;
+        const width = this.image.width;
+        const height = this.image.height;
+    
+        EventBus.emit('displayPorts', x, y, width, height, 'Switch');
+    
+    }
 }
 
 export class Router extends ImageManager {
@@ -120,6 +144,7 @@ export class Router extends ImageManager {
         this.image = image;
         this.addText();
         this.ports = new Array(4).fill(null);
+
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
     }
 
@@ -161,6 +186,15 @@ export class Router extends ImageManager {
             return this.ports[portIndex];
         }
         return null;
+    }
+
+    public displayPorts() {
+
+        const x = this.image.x - this.image.width / 2;
+        const y = this.image.y - this.image.height / 2;
+        const width = this.image.width;
+        const height = this.image.height;
+        EventBus.emit('displayPorts', x, y, width, height, 'Router');
     }
 }
 

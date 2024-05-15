@@ -16,6 +16,9 @@ const config: Phaser.Types.Core.GameConfig = {
         noAudio: true,
     },
     disableContextMenu: true,
+    dom: {
+        createContainer: true,
+    },
 };
 
 const StartGame = (parent: string) => {

@@ -20,7 +20,6 @@ export class ImageManager{
             this.dragBox.setVisible(false);
         });
         
-        this.image.on('pointerdown', this.displayPropertiesPanel.bind(this));
         this.image.on('pointerdown', this.clickBox.bind(this));
         
 
@@ -57,8 +56,6 @@ export class ImageManager{
             imageGameObject.x = dragX;
             imageGameObject.y = dragY;
 
-            console.log(this.image.x, this.image.y);
-
             // Update the position of the drag box
             this.dragBox.x = dragX - this.image.width / 2;
             this.dragBox.y = dragY - this.image.height / 2;
@@ -82,17 +79,6 @@ export class ImageManager{
         const worldPointer = this.scene.input.activePointer;
         if (!this.image.getBounds().contains(worldPointer.worldX, worldPointer.worldY)){
             this.clickbox.setVisible(false);
-        }
-    }
-
-    private displayPropertiesPanel(pointer: Phaser.Input.Pointer) {
-        if (pointer.rightButtonDown()) {
-            const x = this.image.x - this.image.width / 2;
-            const y = this.image.y - this.image.height / 2;
-            const width = this.image.width;
-            const height = this.image.height;
-    
-            EventBus.emit('displayDropDown', x, y, width, height);
         }
     }
 }
