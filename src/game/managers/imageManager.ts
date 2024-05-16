@@ -21,9 +21,9 @@ export class ImageManager{
         });
         
         this.image.on('pointerdown', this.clickBox.bind(this));
-        
 
         document.addEventListener('pointerdown', this.hideClickBox.bind(this));
+
     }
 
     private createDragBox() {
@@ -49,12 +49,16 @@ export class ImageManager{
     private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
         if (imageGameObject === this.image) {// Update the position of the image
 
+            EventBus.emit('updateDomPosition', { x: dragX, y: dragY, width: this.image.width, height: this.image.height});
+
             this.scene.children.bringToTop(this.image);
             this.scene.children.bringToTop(this.dragBox);
             this.scene.children.bringToTop(this.clickbox);
 
             imageGameObject.x = dragX;
             imageGameObject.y = dragY;
+
+            console.log(this.image.x, this.image.y);
 
             // Update the position of the drag box
             this.dragBox.x = dragX - this.image.width / 2;

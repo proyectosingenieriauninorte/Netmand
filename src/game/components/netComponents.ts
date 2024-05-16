@@ -1,7 +1,11 @@
 import { Scene } from 'phaser';
 import { ImageManager } from '../managers/imageManager';
 import { EventBus } from '../EventBus';
+import { createRoot } from 'react-dom/client';
+import SwitchPortMenu from '../primitives/contextMenu/switchPortsMenu';
+import PcPortMenu from '../primitives/contextMenu/pcPortsMenu';
 
+import ReactDOM from 'react-dom';
 
 export class Pc extends ImageManager {
     scene: Scene;
@@ -10,17 +14,21 @@ export class Pc extends ImageManager {
     identifier: number;
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-
     connected: boolean = false;
+
+    DomElement: Phaser.GameObjects.DOMElement;
     
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
         this.scene = scene;
         this.identifier = identifier;
         this.image = image;
+
         this.addText();
+        //this.createDomElement();
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
+        this.image.on('pointerdown', this.displayPorts.bind(this));
     }
 
     private addText() {
@@ -41,13 +49,11 @@ export class Pc extends ImageManager {
         }
     }
 
-    public displayPorts(pointer: Phaser.Input.Pointer) { 
-        const camera = this.scene.cameras.main;
-        const localX = (this.image.x - camera.worldView.x) - this.image.width / 2;
-        const localY = (this.image.y - camera.worldView.y) - this.image.height / 2;
-        const width = this.image.width;
-        const height = this.image.height;
-        EventBus.emit('displayPorts', localX, localY, width, height, 'Pc');
+    public displayPorts(pointer: Phaser.Input.Pointer) {
+
+        const x = this.image.x - this.image.width / 2;
+        const y = this.image.y - this.image.height / 2;
+        EventBus.emit('Ports', x, y, this.image.width, this.image.height, 'Pc');
     }
 }
 
@@ -114,15 +120,7 @@ export class Switch extends ImageManager {
     }
 
     public displayPorts(pointer: Phaser.Input.Pointer) {
-    
-        console.log('Right click');
-        const x = this.image.x - this.image.width / 2;
-        const y = this.image.y - this.image.height / 2;
-        const width = this.image.width;
-        const height = this.image.height;
-    
-        EventBus.emit('displayPorts', x, y, width, height, 'Switch');
-    
+        EventBus.emit('displayPorts', this.image.x, this.image.y, this.image.width, this.image.height, 'Switch');
     }
 }
 
@@ -189,12 +187,7 @@ export class Router extends ImageManager {
     }
 
     public displayPorts() {
-
-        const x = this.image.x - this.image.width / 2;
-        const y = this.image.y - this.image.height / 2;
-        const width = this.image.width;
-        const height = this.image.height;
-        EventBus.emit('displayPorts', x, y, width, height, 'Router');
+        EventBus.emit('displayPorts', this.image.x, this.image.y, this.image.width, this.image.height, 'Router');
     }
 }
 
