@@ -4,7 +4,7 @@ import { EventBus } from './EventBus';
 
 import PcPortMenu from './primitives/contextMenu/pcPortsMenu';
 import SwitchPortMenu from './primitives/contextMenu/switchPortsMenu';
-
+import { createRoot } from 'react-dom/client';
 
 
 export interface IRefPhaserGame
@@ -66,21 +66,31 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     };
 
     const handleDisplayPorts = (x: number, y: number, width: number, height: number, type: string) => {
-        if (type === 'Switch') {
-            setSwitchPortsVisible(true);
-            setPcPortsVisible(false);
-        } else if (type === 'Pc'){
-            setPcPortsVisible(true);
-            setSwitchPortsVisible(false);
+        const domElement = document.getElementById('displayPorts');
+    
+        if (domElement) {
+            // Clear existing children
+            domElement.innerHTML = '';
+    
+            if (type === 'Switch') {
+                setSwitchPortsVisible(true);
+                setPcPortsVisible(false);
+                const switchMenu = document.createElement('div');
+                switchMenu.id = 'switch-menu';
+                domElement.appendChild(switchMenu);
+                createRoot(switchMenu).render(<SwitchPortMenu />);
+            } else if (type === 'Pc') {
+                setPcPortsVisible(true);
+                setSwitchPortsVisible(false);
+                const pcMenu = document.createElement('div');
+                pcMenu.id = 'pc-menu';
+                domElement.appendChild(pcMenu);
+                createRoot(pcMenu).render(<PcPortMenu />);
+            }
+            setDropdownPosition({ x, y });
+            setDropdownSize({ width, height });
+            setTriggerRightClick(true);
         }
-        setDropdownPosition({ x, y });
-
-        
-
-        console.log(x, y);
-
-        setDropdownSize({ width, height });
-        setTriggerRightClick(true); // Trigger the right-click event in the useEffect
     };
 
     useEffect(() => {
@@ -111,6 +121,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
     useEffect(() => {
         if (triggerRightClick) {
+
             // Ensure the element is present in the DOM
             const contextMenuTrigger = document.querySelector('.ContextMenuTrigger') as HTMLElement;
             if (contextMenuTrigger) {
@@ -120,7 +131,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                     bubbles: true,
                     cancelable: true,
                     view: window,
-                    clientX: dropdownPosition.x + 450,
+                    clientX: dropdownPosition.x,
                     clientY: dropdownPosition.y,
                     button: 2 // Right mouse button
                 });
@@ -165,22 +176,6 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
             transform: 'scale(1, 1)',
             transformOrigin: 'left top' 
         }}>
-            {pcPortsVisible && <PcPortMenu style={{
-                pointerEvents: 'auto',
-                position: 'absolute',
-                left: dropdownPosition.x,
-                top: dropdownPosition.y,
-                width: dropdownSize.width,
-                height: dropdownSize.height
-            }} />}
-            {switchPortsVisible && <SwitchPortMenu style={{
-                pointerEvents: 'auto',
-                position: 'absolute',
-                left: dropdownPosition.x,
-                top: dropdownPosition.y,
-                width: dropdownSize.width,
-                height: dropdownSize.height
-            }} />}
         </div>
         </div>
     );
