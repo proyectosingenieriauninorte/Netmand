@@ -12,7 +12,6 @@ export class canva extends Scene
     private isBeingAddedToCanvas: boolean = false;
     private cableStartType: Pc | Switch | Router | undefined;
 
-    private DomElement: Phaser.GameObjects.DOMElement | null;
 
     constructor (){super('canva');}
 
@@ -27,8 +26,6 @@ export class canva extends Scene
 
     create (){   
 
-        this.createPortDomElement();
-
         this.input.on('wheel', this.zoom, this);
         //this.input.on('pointerdown', this.componentDropMenu.bind(this));
 
@@ -36,28 +33,6 @@ export class canva extends Scene
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
-
-        EventBus.on('Ports', (x: number, y: number, width: number, height: number) => {
-            if (this.DomElement) {                
-                    
-            }
-        });
-
-        EventBus.on('updateDomPosition', (position: { x: number, y: number, width: number, height: number }) => {
-            const camera = this.cameras.main;
-
-            if (this.DomElement) {
-                this.DomElement.setPosition(position.x - position.width / 2, position.y - position.height / 2);
-
-                const htmlElement = this.DomElement.node as HTMLElement;
-                htmlElement.style.width = `${position.width}px`;
-                htmlElement.style.height = `${position.height}px`;
-                htmlElement.style.lineHeight = `${position.height}px`;
-                htmlElement.style.transformOrigin = 'top left';
-                htmlElement.style.transform = `scale(${camera.zoom})`;
-            }
-        });
-        
 
         // Delete component on key press
         this.input.keyboard?.on('keydown-BACKSPACE', () => {
@@ -222,10 +197,9 @@ export class canva extends Scene
             newZoom = this._zoom / 1.1; // zoom out
         }
         this._zoom = Phaser.Math.Clamp(newZoom, 0.6, 2);
-        this.cameras.main.zoom = this._zoom;
+        this.cameras.main.setZoom(this._zoom);
     }
 
-    
     /******************************************************************
      * 
                         ** ADD CABLES **
@@ -246,7 +220,6 @@ export class canva extends Scene
             if (!this.cableStartType) { // STARTING POINT    
                 const component = pcUnderPointer || switchUnderPointer || routerUnderPointer;
                 if (component) {
-                    component.displayPorts(pointer);
                     if (component instanceof Pc && component.connected === true) {
                         console.log('Pc already connected');
                         return;
@@ -462,14 +435,7 @@ export class canva extends Scene
                         ** Overlay Div Properties **
 
     ********************************************************************/
-    private createPortDomElement() {
-        this.DomElement = this.add.dom(0, 0, 'div', {
-            backgroundColor: 'lime',
-            });
-            
-            // Assigning ID to the DOM element
-            this.DomElement.node.id = 'displayPorts';
-    }
+
 }
 
 

@@ -29,6 +29,7 @@ export class Pc extends ImageManager {
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
         this.image.on('pointerdown', this.displayPorts.bind(this));
+        
     }
 
     private addText() {
@@ -49,11 +50,16 @@ export class Pc extends ImageManager {
         }
     }
 
-    public displayPorts(pointer: Phaser.Input.Pointer) {
+    public displayPorts() {
 
-        const x = this.image.x - this.image.width / 2;
-        const y = this.image.y - this.image.height / 2;
-        EventBus.emit('Ports', x, y, this.image.width, this.image.height, 'Pc');
+        const camera = this.scene.cameras.main;
+
+        const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
+        const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+        const adjustedWidth = this.image.width * camera.zoom;
+        const adjustedHeight = this.image.height * camera.zoom;
+
+        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Pc'});
     }
 }
 
@@ -77,6 +83,7 @@ export class Switch extends ImageManager {
         this.addText();
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
+        this.image.on('pointerdown', this.displayPorts.bind(this));
     }
 
     private addText() {
@@ -119,8 +126,16 @@ export class Switch extends ImageManager {
         return null;
     }
 
-    public displayPorts(pointer: Phaser.Input.Pointer) {
-        EventBus.emit('displayPorts', this.image.x, this.image.y, this.image.width, this.image.height, 'Switch');
+    public displayPorts() {
+
+        const camera = this.scene.cameras.main;
+
+        const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
+        const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+        const adjustedWidth = this.image.width * camera.zoom;
+        const adjustedHeight = this.image.height * camera.zoom;
+
+        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Switch'});
     }
 }
 
@@ -144,6 +159,7 @@ export class Router extends ImageManager {
         this.ports = new Array(4).fill(null);
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
+        this.image.on('pointerdown', this.displayPorts.bind(this));
     }
 
     private addText() {
@@ -187,7 +203,15 @@ export class Router extends ImageManager {
     }
 
     public displayPorts() {
-        EventBus.emit('displayPorts', this.image.x, this.image.y, this.image.width, this.image.height, 'Router');
+
+        const camera = this.scene.cameras.main;
+
+        const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
+        const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+        const adjustedWidth = this.image.width * camera.zoom;
+        const adjustedHeight = this.image.height * camera.zoom;
+
+        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Router'});
     }
 }
 

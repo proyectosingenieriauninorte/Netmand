@@ -1,5 +1,4 @@
 import { Scene } from 'phaser';
-import { EventBus } from '../EventBus';
 
 export class ImageManager{
     scene: Scene;
@@ -48,8 +47,6 @@ export class ImageManager{
     
     private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
         if (imageGameObject === this.image) {// Update the position of the image
-
-            EventBus.emit('updateDomPosition', { x: dragX, y: dragY, width: this.image.width, height: this.image.height});
 
             this.scene.children.bringToTop(this.image);
             this.scene.children.bringToTop(this.dragBox);

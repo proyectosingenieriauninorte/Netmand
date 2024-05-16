@@ -4,13 +4,13 @@ import { DotFilledIcon, CheckIcon, ChevronRightIcon } from '@radix-ui/react-icon
 import { EventBus } from '@/game/EventBus';
 import './styles.css';
 
-interface PcPortMenuProps {
+interface RouterPortMenuProps {
   style?: React.CSSProperties;
 }
 
 import { FC } from 'react';
 
-const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
+const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
   const [bookmarksChecked, setBookmarksChecked] = React.useState(true);
   const [urlsChecked, setUrlsChecked] = React.useState(false);
   const [person, setPerson] = React.useState('pedro');
@@ -26,6 +26,12 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
         <ContextMenu.Content className="ContextMenuContent">
           <ContextMenu.Item className="ContextMenuItem" >
             FastEthernet <div className="RightSlot">0/1</div>
+          </ContextMenu.Item>
+          <ContextMenu.Item className="ContextMenuItem" >
+            FastEthernet <div className="RightSlot">0/2</div>
+          </ContextMenu.Item>
+          <ContextMenu.Item className="ContextMenuItem" >
+            FastEthernet <div className="RightSlot">0/3</div>
           </ContextMenu.Item>
 
 
@@ -43,4 +49,4 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
   );
 };
 
-export default PcPortMenu;
+export default RouterPortMenu;
