@@ -1,11 +1,7 @@
 import { Scene } from 'phaser';
 import { ImageManager } from '../managers/imageManager';
 import { EventBus } from '../EventBus';
-import { createRoot } from 'react-dom/client';
-import SwitchPortMenu from '../primitives/contextMenu/switchPortsMenu';
-import PcPortMenu from '../primitives/contextMenu/pcPortsMenu';
 
-import ReactDOM from 'react-dom';
 
 export class Pc extends ImageManager {
     scene: Scene;
@@ -16,8 +12,6 @@ export class Pc extends ImageManager {
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     connected: boolean = false;
 
-    DomElement: Phaser.GameObjects.DOMElement;
-    
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
         this.scene = scene;
@@ -28,8 +22,6 @@ export class Pc extends ImageManager {
         //this.createDomElement();
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
-        this.image.on('pointerdown', this.displayPorts.bind(this));
-        
     }
 
     private addText() {
@@ -51,7 +43,6 @@ export class Pc extends ImageManager {
     }
 
     public displayPorts() {
-
         const camera = this.scene.cameras.main;
 
         const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
@@ -59,7 +50,7 @@ export class Pc extends ImageManager {
         const adjustedWidth = this.image.width * camera.zoom;
         const adjustedHeight = this.image.height * camera.zoom;
 
-        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Pc'});
+        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Pc'}); 
     }
 }
 
@@ -73,6 +64,7 @@ export class Switch extends ImageManager {
     connectedPcs: Pc[] = [];
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     ports: (Pc | Router | null)[];
+    vlans: string[] = [];
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
@@ -80,10 +72,10 @@ export class Switch extends ImageManager {
         this.identifier = identifier;
         this.image = image;
         this.ports = new Array(24).fill(null);
+        this.vlans = new Array(24).fill('');
         this.addText();
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
-        this.image.on('pointerdown', this.displayPorts.bind(this));
     }
 
     private addText() {
@@ -127,7 +119,6 @@ export class Switch extends ImageManager {
     }
 
     public displayPorts() {
-
         const camera = this.scene.cameras.main;
 
         const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
@@ -135,7 +126,7 @@ export class Switch extends ImageManager {
         const adjustedWidth = this.image.width * camera.zoom;
         const adjustedHeight = this.image.height * camera.zoom;
 
-        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Switch'});
+        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Switch'}); 
     }
 }
 
@@ -159,7 +150,6 @@ export class Router extends ImageManager {
         this.ports = new Array(4).fill(null);
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
-        this.image.on('pointerdown', this.displayPorts.bind(this));
     }
 
     private addText() {
@@ -203,7 +193,6 @@ export class Router extends ImageManager {
     }
 
     public displayPorts() {
-
         const camera = this.scene.cameras.main;
 
         const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
@@ -211,7 +200,7 @@ export class Router extends ImageManager {
         const adjustedWidth = this.image.width * camera.zoom;
         const adjustedHeight = this.image.height * camera.zoom;
 
-        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Router'});
+        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Router'}); 
     }
 }
 

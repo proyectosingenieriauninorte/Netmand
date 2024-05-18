@@ -61,18 +61,16 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     };
 
     const handleDisplayPorts = (data: { x: number, y: number, width: number, height: number, type: string }) => {
-        const { x, y, width, height, type } = data; // Destructure the data object
+        const { x, y, width, height, type } = data;
         setDropdownPosition({ x, y });
         setDropdownSize({ width, height });
     
-        console.log('displayPorts', x, y, width, height, type);
-    
         if (type === 'Switch') {
-            setPanelContent(<SwitchPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute'}} />);
+            setPanelContent(<SwitchPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute' }} />);
         } else if (type === 'Pc') {
-            setPanelContent(<PcPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute'}} />);
-        } else if (type === 'Router'){
-            setPanelContent(<RouterPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute'}} />);
+            setPanelContent(<PcPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute' }} />);
+        } else if (type === 'Router') {
+            setPanelContent(<RouterPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute' }} />);
         }
 
         setTriggerRightClick(true);
@@ -81,7 +79,6 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     useEffect(() => {
         if (triggerRightClick) {
             const handleMouseMove = (event: { clientX: any; clientY: any; }) => {
-                // Get the current mouse coordinates
                 const mouseX = event.clientX;
                 const mouseY = event.clientY;
     
@@ -102,10 +99,8 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 setTriggerRightClick(false);
             };
     
-            // Add event listener for mousemove
             document.addEventListener('mousemove', handleMouseMove);
     
-            // Clean up the event listener on triggerRightClick change
             return () => {
                 document.removeEventListener('mousemove', handleMouseMove);
             };
@@ -115,7 +110,10 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
     useEffect(() => {
         EventBus.on('cancelDisplayPorts', () => {
             console.log('cancelDisplayPorts');
-            setPanelContent(null);
+            const contextMenuContent = document.querySelector('.ContextMenuTrigger') as HTMLElement;
+            if (contextMenuContent) {
+                contextMenuContent.style.display = 'none';
+            }
         });
 
         EventBus.on('displayPorts', handleDisplayPorts);

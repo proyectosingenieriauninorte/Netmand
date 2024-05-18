@@ -55,8 +55,6 @@ export class ImageManager{
             imageGameObject.x = dragX;
             imageGameObject.y = dragY;
 
-            console.log(this.image.x, this.image.y);
-
             // Update the position of the drag box
             this.dragBox.x = dragX - this.image.width / 2;
             this.dragBox.y = dragY - this.image.height / 2;
