@@ -24,14 +24,14 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
       <ContextMenu.Trigger className="ContextMenuTrigger" style={style} ></ContextMenu.Trigger>
       <ContextMenu.Portal>
         <ContextMenu.Content className="ContextMenuContent">
-          <ContextMenu.Item className="ContextMenuItem" >
+          <ContextMenu.Item className="ContextMenuItem" onClick={cancel}>
             FastEthernet <div className="RightSlot">0/1</div>
           </ContextMenu.Item>
 
 
           <ContextMenu.Separator className="ContextMenuSeparator" />
 
-          <ContextMenu.Item className="ContextMenuItem" >
+          <ContextMenu.Item className="ContextMenuItem" onClick={cancel}>
             Cancelar <div className="RightSlot">X</div>
           </ContextMenu.Item>
 
