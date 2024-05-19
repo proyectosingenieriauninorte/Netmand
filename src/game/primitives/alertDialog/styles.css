@@ -1,0 +1,67 @@
+#alertDialog {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.AlertDialogContent {
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.AlertDialogHeader {
+    margin-bottom: 20px;
+}
+
+.AlertDialogTitle {
+    font-size: 1.5em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.AlertDialogDescription {
+    font-size: 1em;
+    color: #ffffff;
+    margin-bottom: 20px;
+}
+
+.AlertDialogFooter {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.AlertDialogCancel,
+.AlertDialogAction {
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+}
+
+.AlertDialogCancel {
+    color: #ffffff;
+}
+
+.AlertDialogCancel:hover {
+    background: #ff0000;
+}
+
+.AlertDialogAction:hover {
+    background: #0056b3;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

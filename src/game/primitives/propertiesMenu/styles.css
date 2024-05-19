@@ -4,7 +4,7 @@
 
 .ContextMenuTrigger {
   display: block;
-  border: 2px rgb(185, 41, 41) dashed;
+  border: 2px white dashed;
   border-radius: 4px;
   font-size: 15px;
   padding: 45px 0;

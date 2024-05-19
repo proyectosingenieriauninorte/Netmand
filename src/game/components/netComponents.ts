@@ -9,18 +9,18 @@ export class Pc extends ImageManager {
     y: number;
     identifier: number;
     image: Phaser.GameObjects.Image;
-    text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-    connected: boolean = false;
+    text: Phaser.GameObjects.Text;
+    ports: (Switch| null)[];
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
         this.scene = scene;
         this.identifier = identifier;
         this.image = image;
-
+        this.ports = new Array(1).fill(null);
         this.addText();
-        //this.createDomElement();
 
+        this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
     }
 
@@ -29,7 +29,7 @@ export class Pc extends ImageManager {
             fontFamily: 'Arial',
             fontSize: '14px',
             color: '#000000'
-        }).setOrigin(0.5); // Set text origin to the center
+        }).setOrigin(0.5); 
     }
 
     private updateTextPosition() {
@@ -42,7 +42,27 @@ export class Pc extends ImageManager {
         }
     }
 
-    public displayPorts() {
+    private displaySettingsMenu(pointer: Phaser.Input.Pointer) {
+        if (pointer.rightButtonDown()) {
+
+            const camera = this.scene.cameras.main;
+            const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
+            const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+            const adjustedWidth = this.image.width * camera.zoom;
+            const adjustedHeight = this.image.height * camera.zoom;
+            
+            EventBus.emit('showPropertiesMenu', {
+                x: adjustedX,
+                y: adjustedY,
+                width: adjustedWidth,
+                height: adjustedHeight,
+                type: 'Pc',
+                id: this.identifier
+            });
+        }        
+    }
+
+    public displayPorts(pointer: Phaser.Input.Pointer) {
         const camera = this.scene.cameras.main;
 
         const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
@@ -50,8 +70,19 @@ export class Pc extends ImageManager {
         const adjustedWidth = this.image.width * camera.zoom;
         const adjustedHeight = this.image.height * camera.zoom;
 
-        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Pc'}); 
+        const e = event as MouseEvent;
+
+        EventBus.emit('showPcPorts', { 
+            x: adjustedX, 
+            y: adjustedY, 
+            width: adjustedWidth, 
+            height: adjustedHeight, 
+            type: 'Pc', 
+            id: this.identifier,
+            clientX: e.clientX,
+            clientY: e.clientY}); 
     }
+
 }
 
 export class Switch extends ImageManager {
@@ -63,19 +94,18 @@ export class Switch extends ImageManager {
     vlan: string = '';
     connectedPcs: Pc[] = [];
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-    ports: (Pc | Router | null)[];
-    vlans: string[] = [];
+    ports: {object: Pc | Router | null, vlan: string;}[];
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
         this.scene = scene;
         this.identifier = identifier;
         this.image = image;
-        this.ports = new Array(24).fill(null);
-        this.vlans = new Array(24).fill('');
+        this.ports = new Array(24).fill(null).map(() => ({ object: null, vlan: '' }));
         this.addText();
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
+        this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
     }
 
     private addText() {
@@ -97,37 +127,78 @@ export class Switch extends ImageManager {
     }
 
     // Method to connect an object to a port
-    public connectToPort(portIndex: number, object: Pc | Router) {
+    public connectToPort(portIndex: number, object: Pc | Router, vlan: string) {
         if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            this.ports[portIndex] = object;
+            this.ports[portIndex] = { object, vlan };
         }
     }
 
     // Method to disconnect an object from a port
     public disconnectFromPort(portIndex: number) {
         if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            this.ports[portIndex] = null;
+            this.ports[portIndex] = { object: null, vlan: '' };
         }
     }
 
     // Method to get the object connected to a port
     public getObjectConnectedToPort(portIndex: number): Pc | Router | null {
         if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            return this.ports[portIndex];
+            return this.ports[portIndex].object;
         }
         return null;
     }
 
-    public displayPorts() {
-        const camera = this.scene.cameras.main;
+    // Method to get the VLAN assigned to a port
+    public getVlanAssignedToPort(portIndex: number): string {
+        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
+            return this.ports[portIndex].vlan;
+        }
+        return '';
+    }
 
-        const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
-        const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+    private displaySettingsMenu(pointer: Phaser.Input.Pointer) {
+        if (pointer.rightButtonDown()) {
+
+            const camera = this.scene.cameras.main;
+            const adjustedX = (this.image.x - this.image.width / 2 - camera.worldView.x) * camera.zoom;
+            const adjustedY = (this.image.y - this.image.height / 2 - camera.worldView.y) * camera.zoom;
+            const adjustedWidth = this.image.width * camera.zoom;
+            const adjustedHeight = this.image.height * camera.zoom;
+
+            EventBus.emit('showPropertiesMenu', {
+                x: adjustedX,
+                y: adjustedY,
+                width: adjustedWidth,
+                height: adjustedHeight,
+                type: 'Switch',
+                id: this.identifier,
+            });
+        }
+    }
+
+    public displayPorts(pointer: Phaser.Input.Pointer) {
+
+        const camera = this.scene.cameras.main;
+        const adjustedX = (this.image.x - this.image.width / 2 - camera.worldView.x) * camera.zoom;
+        const adjustedY = (this.image.y - this.image.height / 2 - camera.worldView.y) * camera.zoom;
         const adjustedWidth = this.image.width * camera.zoom;
         const adjustedHeight = this.image.height * camera.zoom;
+        
+        const e = event as MouseEvent;
 
-        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Switch'}); 
+        EventBus.emit('displayPorts', {
+            x: adjustedX,
+            y: adjustedY,
+            width: adjustedWidth,
+            height: adjustedHeight,
+            type: 'Switch',
+            id: this.identifier,
+            ports: this.ports,
+            clientX: e.clientX,
+            clientY: e.clientY
+        });
     }
+    
 }
 
 export class Router extends ImageManager {
@@ -137,8 +208,6 @@ export class Router extends ImageManager {
     identifier: number;
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-
-    connected: boolean = false;
     ports: (Router | Switch | null)[];
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
@@ -150,6 +219,7 @@ export class Router extends ImageManager {
         this.ports = new Array(4).fill(null);
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
+        this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
     }
 
     private addText() {
@@ -192,15 +262,47 @@ export class Router extends ImageManager {
         return null;
     }
 
-    public displayPorts() {
-        const camera = this.scene.cameras.main;
+    private displaySettingsMenu(pointer: Phaser.Input.Pointer) {
+        if (pointer.rightButtonDown()) {
 
-        const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
-        const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+            const camera = this.scene.cameras.main;
+            const adjustedX = (this.image.x - this.image.width/2 - camera.worldView.x) * camera.zoom;
+            const adjustedY = (this.image.y - this.image.height/2 - camera.worldView.y) * camera.zoom;
+            const adjustedWidth = this.image.width * camera.zoom;
+            const adjustedHeight = this.image.height * camera.zoom;
+
+            EventBus.emit('showPropertiesMenu', {
+                x: adjustedX,
+                y: adjustedY,
+                width: adjustedWidth,
+                height: adjustedHeight,
+                type: 'Router',
+                id: this.identifier
+            });
+        }
+    }
+
+    public displayPorts(pointer: Phaser.Input.Pointer) {
+
+        const camera = this.scene.cameras.main;
+        const adjustedX = (this.image.x - this.image.width / 2 - camera.worldView.x) * camera.zoom;
+        const adjustedY = (this.image.y - this.image.height / 2 - camera.worldView.y) * camera.zoom;
         const adjustedWidth = this.image.width * camera.zoom;
         const adjustedHeight = this.image.height * camera.zoom;
+        
+        const e = event as MouseEvent;
 
-        EventBus.emit('displayPorts', { x: adjustedX, y: adjustedY, width: adjustedWidth, height: adjustedHeight, type: 'Router'}); 
+        EventBus.emit('displayRouterPorts', {
+            x: adjustedX,
+            y: adjustedY,
+            width: adjustedWidth,
+            height: adjustedHeight,
+            type: 'Router',
+            id: this.identifier,
+            ports: this.ports,
+            clientX: e.clientX,
+            clientY: e.clientY
+        });
     }
 }
 

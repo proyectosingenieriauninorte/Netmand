@@ -1,10 +1,12 @@
 import { forwardRef, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import StartGame from './main';
 import { EventBus } from './EventBus';
+import { AlertDemo } from './primitives/messageDialog/messageDialog';
+import PropertiesMenu from './primitives/propertiesMenu/propertiesMenu';
+import {AlertDialogDemo} from './primitives/alertDialog/alertDialog';
 import PcPortMenu from './primitives/contextMenu/pcPortsMenu';
 import SwitchPortMenu from './primitives/contextMenu/switchPortsMenu';
 import RouterPortMenu from './primitives/contextMenu/routerPortsMenu';
-import { createRoot, Root } from 'react-dom/client';
 
 export interface IRefPhaserGame {
     game: Phaser.Game | null;
@@ -17,11 +19,7 @@ interface IProps {
 
 export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame({ currentActiveScene }, ref) {
     const game = useRef<Phaser.Game | null>(null);
-    const [dropdownPosition, setDropdownPosition] = useState({ x: 0, y: 0 });
-    const [dropdownSize, setDropdownSize] = useState({ width: 0, height: 0 });
-    const [panelContent, setPanelContent] = useState<React.ReactNode>(null);
-    const propertiesPanelRootRef = useRef<Root | null>(null);
-    const [triggerRightClick, setTriggerRightClick] = useState(false);
+    const [alertMessage, setAlertMessage] = useState<string | null>(null); // State for alert message
 
     const handleCanvasResize = () => {
         if (game.current) {
@@ -46,77 +44,33 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
 
     const handleComponentButtonClick = (event: Event) => {
         const target = event.target as HTMLElement;
-        if (target.id === 'pc-btton') {
-            EventBus.emit('addPc');
-        }
-        if (target.id === 'switch-btton') {
-            EventBus.emit('addSwitch');
-        }
-        if (target.id === 'cable-btton') {
-            EventBus.emit('addCable');
-        }
-        if (target.id === 'router-btton') {
-            EventBus.emit('addRouter');
+        
+        switch(target.id) {
+            case 'pc-btton':
+                EventBus.emit('addPc');
+                break;
+            case 'switch-btton':
+                EventBus.emit('addSwitch');
+                break;
+            case 'cable-btton':
+                EventBus.emit('addCable');
+                break;
+            case 'router-btton':
+                EventBus.emit('addRouter');
+                break;
+            default:
+                break;
         }
     };
 
-    const handleDisplayPorts = (data: { x: number, y: number, width: number, height: number, type: string }) => {
-        const { x, y, width, height, type } = data;
-        setDropdownPosition({ x, y });
-        setDropdownSize({ width, height });
-    
-        if (type === 'Switch') {
-            setPanelContent(<SwitchPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute' }} />);
-        } else if (type === 'Pc') {
-            setPanelContent(<PcPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute' }} />);
-        } else if (type === 'Router') {
-            setPanelContent(<RouterPortMenu style={{ left: x, top: y, width, height, pointerEvents: 'auto', position: 'absolute' }} />);
-        }
-
-        setTriggerRightClick(true);
-    };
-
     useEffect(() => {
-        if (triggerRightClick) {
-            const handleMouseMove = (event: { clientX: any; clientY: any; }) => {
-                const mouseX = event.clientX;
-                const mouseY = event.clientY;
-    
-                const contextMenuTrigger = document.querySelector('.ContextMenuTrigger') as HTMLElement;
-    
-                if (contextMenuTrigger) {
-                    const contextMenuEvent = new MouseEvent('contextmenu', {
-                        bubbles: true,
-                        cancelable: true,
-                        view: window,
-                        clientX: mouseX,
-                        clientY: mouseY,
-                        button: 2
-                    });
-                    contextMenuTrigger.dispatchEvent(contextMenuEvent);
-                }
-    
-                setTriggerRightClick(false);
-            };
-    
-            document.addEventListener('mousemove', handleMouseMove);
-    
-            return () => {
-                document.removeEventListener('mousemove', handleMouseMove);
-            };
-        }
-    }, [triggerRightClick]);
-
-    useEffect(() => {
-        EventBus.on('cancelDisplayPorts', () => {
-            console.log('cancelDisplayPorts');
-            const contextMenuContent = document.querySelector('.ContextMenuTrigger') as HTMLElement;
-            if (contextMenuContent) {
-                contextMenuContent.style.display = 'none';
-            }
+        EventBus.on('showAlert', (message: string) => {
+            setAlertMessage(message);
         });
 
-        EventBus.on('displayPorts', handleDisplayPorts);
+        EventBus.on('hideAlert', () => {
+            setAlertMessage(null);
+        });
 
         window.addEventListener('resize', handleCanvasResize);
         window.addEventListener('resize', handlePropertiesPanelResize);
@@ -126,7 +80,6 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
         handlePropertiesPanelResize();
 
         return () => {
-            EventBus.off('displayPorts', handleDisplayPorts);
             document.removeEventListener('click', handleComponentButtonClick);
             window.removeEventListener('resize', handleCanvasResize);
         };
@@ -150,19 +103,6 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
         };
     }, [ref]);
 
-    useEffect(() => {
-        const domElement = document.getElementById('properties-panel');
-        if (domElement && !propertiesPanelRootRef.current) {
-            propertiesPanelRootRef.current = createRoot(domElement);
-        }
-    }, []);
-
-    useEffect(() => {
-        if (propertiesPanelRootRef.current && panelContent) {
-            propertiesPanelRootRef.current.render(panelContent);
-        }
-    }, [panelContent]);
-
     return (
         <div id='canva-container' className='relative flex-grow overflow-auto'>
             <div id='properties-panel' className='absolute hidden' style={{
@@ -175,7 +115,15 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 pointerEvents: 'none',
                 transform: 'scale(1, 1)',
                 transformOrigin: 'left top'
-            }} />
+            }} >
+                {<AlertDemo message={alertMessage} />} {/* Conditionally render AlertDemo */}
+                {<PropertiesMenu style={{ position: 'absolute', top: '0px', left: '0px', pointerEvents: 'auto'}} />} 
+                {<AlertDialogDemo style={{ position: 'absolute', pointerEvents: 'auto'}} />} {/* Conditionally render AlertDialogDemo */}
+                {<PcPortMenu style={{ position: 'absolute', top: '0px', left: '0px', pointerEvents: 'auto'}} />}{/* Conditionally render PcPortMenu */}
+                {<SwitchPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchPortMenu */}
+                {<RouterPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterPortMenu */}
+            </div>
+            
         </div>
     );
 });

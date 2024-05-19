@@ -1,4 +1,5 @@
 import { Scene } from 'phaser';
+import { EventBus } from '../EventBus';
 
 export class ImageManager{
     scene: Scene;
@@ -17,24 +18,56 @@ export class ImageManager{
         this.scene.input.on('dragstart', this.startDrag.bind(this));
         this.scene.input.on('dragend', (imageGameObject: Phaser.GameObjects.Image) => {
             this.dragBox.setVisible(false);
+            EventBus.emit('hideAlert');
         });
         
         this.image.on('pointerdown', this.clickBox.bind(this));
 
         document.addEventListener('pointerdown', this.hideClickBox.bind(this));
-
     }
 
     private createDragBox() {
         this.dragBox = this.scene.add.graphics();
-        this.dragBox.lineStyle(2, 0x43A5F1, 1);
-        this.dragBox.strokeRect(this.image.x, this.image.y, this.image.width, this.image.height);
-        this.dragBox.setVisible(false)
-
         this.clickbox = this.scene.add.graphics();
-        this.clickbox.lineStyle(2, 0x000000, 1);
-        this.clickbox.strokeRect(this.image.x, this.image.y, this.image.width, this.image.height);
+
+        this.drawDashedRect(this.dragBox, this.image.x, this.image.y, this.image.width, this.image.height, 2, 0x43A5F1);
+        this.drawDashedRect(this.clickbox, this.image.x, this.image.y, this.image.width, this.image.height, 2, 0x000000);
+
+        this.dragBox.setVisible(false);
         this.clickbox.setVisible(false);
+    }
+
+    private drawDashedRect(graphics: Phaser.GameObjects.Graphics, x: number, y: number, width: number, height: number, lineWidth: number, color: number) {
+        const dashLength = 5;
+        const gapLength = 3;
+
+        graphics.lineStyle(lineWidth, color, 1);
+
+        // Top border
+        for (let i = x; i < x + width; i += dashLength + gapLength) {
+            graphics.moveTo(i, y);
+            graphics.lineTo(i + dashLength, y);
+        }
+
+        // Bottom border
+        for (let i = x; i < x + width; i += dashLength + gapLength) {
+            graphics.moveTo(i, y + height);
+            graphics.lineTo(i + dashLength, y + height);
+        }
+
+        // Left border
+        for (let i = y; i < y + height; i += dashLength + gapLength) {
+            graphics.moveTo(x, i);
+            graphics.lineTo(x, i + dashLength);
+        }
+
+        // Right border
+        for (let i = y; i < y + height; i += dashLength + gapLength) {
+            graphics.moveTo(x + width, i);
+            graphics.lineTo(x + width, i + dashLength);
+        }
+
+        graphics.strokePath();
     }
 
     private startDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number){
@@ -42,6 +75,11 @@ export class ImageManager{
             this.dragBox.setVisible(true);
             this.dragBox.x = dragX - this.image.width / 2;
             this.dragBox.y = dragY - this.image.height / 2;
+
+            const propertiesMenu = document.getElementById('comp-properties');
+            if (propertiesMenu) {
+                propertiesMenu.style.display = 'none';
+            }
         }
     }
     
@@ -51,6 +89,8 @@ export class ImageManager{
             this.scene.children.bringToTop(this.image);
             this.scene.children.bringToTop(this.dragBox);
             this.scene.children.bringToTop(this.clickbox);
+
+            EventBus.emit('showAlert', 'moving component...');
 
             imageGameObject.x = dragX;
             imageGameObject.y = dragY;
@@ -71,6 +111,8 @@ export class ImageManager{
         if(pointer.leftButtonDown()) {
             this.clickbox.setVisible(true);
             this.updateClickBox(pointer);
+        }else{
+            this.clickbox.setVisible(false);
         }
     }
 

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, FC } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { DotFilledIcon } from '@radix-ui/react-icons';
 import { EventBus } from '@/game/EventBus';
@@ -8,42 +8,135 @@ interface SwitchPortMenuProps {
   style?: React.CSSProperties;
 }
 
-import { FC } from 'react';
-
 const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
-  const cancel = () => {
-    EventBus.emit('cancelDisplayPorts');
+  const [menuCoordinates, setMenuCoordinates] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    type: string;
+    id: number;
+    ports: { object: any, vlan: string }[];
+  }>({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    type: '',
+    id: 0,
+    ports: []
+  });
+
+  const [contextMenuTrigger, setContextMenuTrigger] = useState<HTMLDivElement | null>(null);
+
+  const hidePorts = () => {
+    const menu = document.getElementById('switchPorts');
+    if (menu) {
+      menu.style.display = 'none';
+    }
   };
 
-  const handlePortClick = (port: string) => {
-    EventBus.emit('selectedSwitchPort', port);
-    cancel();
+  const adjustCoordinates = (x: number, y: number, menuWidth: number, menuHeight: number) => {
+    const canvas = document.getElementById('canvas');
+    if (!canvas) return { x, y };
+
+    const canvasRect = canvas.getBoundingClientRect();
+
+    // Adjust coordinates if the menu goes out of bounds
+    if (x + menuWidth > canvasRect.right) {
+      x = canvasRect.right - menuWidth;
+    }
+    if (y + menuHeight > canvasRect.bottom) {
+      y = canvasRect.bottom - menuHeight;
+    }
+
+    // Ensure menu doesn't go above or to the left of the canvas
+    if (x < canvasRect.left) {
+      x = canvasRect.left;
+    }
+    if (y < canvasRect.top) {
+      y = canvasRect.top;
+    }
+
+    return { x, y };
   };
+
+  useEffect(() => {
+    const showPorts = (data: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      type: string;
+      id: number;
+      ports: { object: any, vlan: string }[];
+      clientX: number;
+      clientY: number;
+    }) => {
+      const menu = document.getElementById('switchPorts');
+      if (menu) {
+        menu.style.left = `${data.x}px`;
+        menu.style.top = `${data.y}px`;
+        menu.style.width = `${data.width}px`;
+        menu.style.height = `${data.height}px`;
+        menu.style.display = 'block';
+      }
+      setMenuCoordinates(data);
+
+      // Programmatically trigger the context menu
+      if (contextMenuTrigger) {
+        const { x, y } = adjustCoordinates(data.clientX, data.clientY, data.width, data.height);
+        const event = new MouseEvent('contextmenu', { bubbles: true, clientX: x, clientY: y });
+        contextMenuTrigger.dispatchEvent(event);
+      }
+    };
+
+    EventBus.on('displayPorts', showPorts);
+    EventBus.on('hidePorts', hidePorts);
+
+    window.addEventListener('click', (e) => {
+      if (e.target !== document.getElementById('switchPorts')) {
+        hidePorts();
+      }
+    });
+
+    return () => {
+      EventBus.off('displayPorts', showPorts);
+      EventBus.off('hidePorts', hidePorts);
+      window.removeEventListener('click', (e) => {
+        if (e.target !== document.getElementById('switchPorts')) {
+          hidePorts();
+        }
+      });
+    };
+  }, [contextMenuTrigger]);
 
   return (
-    <ContextMenu.Root>
-      <ContextMenu.Trigger className="ContextMenuTrigger" style={style}></ContextMenu.Trigger>
-      <ContextMenu.Portal>
-        <ContextMenu.Content className="ContextMenuContent">
-          {Array.from({ length: 18 }, (_, i) => (
-            <ContextMenu.Item key={i} className="ContextMenuItem" onClick={() => handlePortClick(`FastEthernet 0/${i + 1}`)}>
-              <DotFilledIcon /> FastEthernet <div className="RightSlot">0/{i + 1}</div>
+    <div id="switchPorts" style={{ display: 'none', position: 'absolute'}}>
+      <ContextMenu.Root>
+        <ContextMenu.Trigger
+          className="ContextMenuTrigger"
+          style={style}
+          ref={(instance: HTMLDivElement | null) => setContextMenuTrigger(instance)}
+        ></ContextMenu.Trigger>
+        <ContextMenu.Portal>
+          <ContextMenu.Content className="ContextMenuContent">
+            {menuCoordinates.ports.map((port, index) => (
+              port.object === null && (
+                <ContextMenu.Item key={index} className="ContextMenuItem">
+                  <DotFilledIcon className="mr-2 h-4 w-4" />
+                  FastEthernet <div className="RightSlot">0/{index + 1}</div>
+                </ContextMenu.Item>
+              )
+            ))}
+            <ContextMenu.Separator className="ContextMenuSeparator" />
+            <ContextMenu.Item className="ContextMenuItem">
+              Cancelar <div className="RightSlot">X</div>
             </ContextMenu.Item>
-          ))}
-          {Array.from({ length: 2 }, (_, i) => (
-            <ContextMenu.Item key={i + 18} className="ContextMenuItem" onClick={() => handlePortClick(`GigabitEthernet 0/${i + 1}`)}>
-              <DotFilledIcon /> GigabitEthernet <div className="RightSlot">0/{i + 1}</div>
-            </ContextMenu.Item>
-          ))}
-
-          <ContextMenu.Separator className="ContextMenuSeparator" />
-
-          <ContextMenu.Item className="ContextMenuItem" onClick={cancel}>
-            Cancelar <div className="RightSlot">X</div>
-          </ContextMenu.Item>
-        </ContextMenu.Content>
-      </ContextMenu.Portal>
-    </ContextMenu.Root>
+          </ContextMenu.Content>
+        </ContextMenu.Portal>
+      </ContextMenu.Root>
+    </div>
   );
 };
 

@@ -28,6 +28,7 @@ const StartGame = (parent: string) => {
     });
 
     game.canvas.classList.add('rounded-xl');
+    game.canvas.id = 'canvas';
     
     if (gameContainer) {
         game.canvas.width = gameContainer.clientWidth;
