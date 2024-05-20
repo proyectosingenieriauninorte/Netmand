@@ -34,8 +34,9 @@ export class canva extends Scene
         EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
         EventBus.on('deleteComponent', (data: {x: number, y: number, obj: string, id: number}) => { 
             this.deleteComponentFromMenu(data); 
-          });
-        //EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
+        });
+
+        EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
 
         // Delete component on key press
         /*this.input.keyboard?.on('keydown-BACKSPACE', () => {
@@ -114,7 +115,7 @@ export class canva extends Scene
             const index = this.pc.indexOf(component);
             if (index !== -1) {
                 this.destroyComponentGraphics(component);
-                this.removeCable(component);
+                //this.removeCable(component);
                 this.pc.splice(index, 1);
                 this.updateIdentifiers(this.pc); // Update identifiers for PCs
             }
@@ -124,7 +125,7 @@ export class canva extends Scene
             const index = this.switches.indexOf(component);
             if (index !== -1) {
                 this.destroyComponentGraphics(component);
-                this.removeCable(component);
+                //this.removeCable(component);
                 this.switches.splice(index, 1);
                 this.updateIdentifiers(this.switches); // Update identifiers for Switches
                 this.updateConnectedStatus(component);
@@ -135,7 +136,7 @@ export class canva extends Scene
             const index = this.routers.indexOf(component);
             if (index !== -1) {
                 this.destroyComponentGraphics(component);
-                this.removeCable(component);
+                //this.removeCable(component);
                 this.routers.splice(index, 1);
                 this.updateIdentifiers(this.routers); // Update identifiers for Routers
             }
@@ -163,6 +164,7 @@ export class canva extends Scene
         component.text.destroy();
     }
 
+    /*
     private removeCable(component: Pc | Switch | Router) {
         this.cables.forEach(cable => {
             if (cable.startComponent === component || cable.endComponent === component) {
@@ -175,7 +177,7 @@ export class canva extends Scene
                 console.log('cables', this.cables.length);
             }
         });
-    }
+    }*/
 
     private updateConnectedStatus(component: Pc | Switch | Router) {
         
@@ -267,10 +269,30 @@ export class canva extends Scene
         if (this.isBeingAddedToCanvas) {
             return;
         }
-    
+
+        let message = 'Adding Cable. Press Escape to abort.';
+        EventBus.emit('showAlert', message);
+
+        const handleCableCreation = (pointer: Phaser.Input.Pointer) => {
+
+            const component = this.getComponnetUnderPointer(pointer);
+
+            if (component) {
+                component.isAconnectionBeingEstablished = true;
+                component.displayPorts(this.input.activePointer);
+            }
+
+        }
+
+        this.input.on('pointerdown', handleCableCreation);
+
     }
 
-
+    private getComponnetUnderPointer(pointer: Phaser.Input.Pointer) {
+        return this.pc.find(pc => pc.image.getBounds().contains(pointer.worldX, pointer.worldY)) ||
+                            this.switches.find(switch_ => switch_.image.getBounds().contains(pointer.worldX, pointer.worldY)) ||
+                            this.routers.find(router => router.image.getBounds().contains(pointer.worldX, pointer.worldY));
+    }
 
     /******************************************************************
      * 
@@ -280,17 +302,17 @@ export class canva extends Scene
     private createComponent(component: string){
         switch(component) {
             case 'pc':
-                const pc_ = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true }));
+                const pc_ = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true, useHandCursor: true }));
                 this.pc.push(pc_);
                 console.log('pcs', this.pc.length);
                 return pc_;
             case 'switch':
-                const switch_ = new Switch(this, this.switches.length, this.add.image(0, 0, 'switch_component').setInteractive({ draggable: true }));
+                const switch_ = new Switch(this, this.switches.length, this.add.image(0, 0, 'switch_component').setInteractive({ draggable: true, useHandCursor: true }));
                 this.switches.push(switch_);
                 console.log('switches', this.switches.length);
                 return switch_;
             case 'router':
-                const router_ = new Router(this, this.routers.length, this.add.image(0, 0, 'router_component').setInteractive({ draggable: true }));
+                const router_ = new Router(this, this.routers.length, this.add.image(0, 0, 'router_component').setInteractive({ draggable: true, useHandCursor: true }));
                 this.routers.push(router_);
                 console.log('routers', this.routers.length);
                 return router_;
@@ -307,6 +329,7 @@ export class canva extends Scene
         const createdComponent = this.createComponent(component);
     
         if (createdComponent) {
+
             let message = '';
     
             if (createdComponent instanceof Pc) {
@@ -318,7 +341,7 @@ export class canva extends Scene
             }
     
             EventBus.emit('showAlert', message);
-    
+
             const handlePointerMove = (pointer: Phaser.Input.Pointer) => {
                 if (this.isBeingAddedToCanvas) {
                     createdComponent.image.setPosition(pointer.worldX, pointer.worldY);
@@ -346,7 +369,6 @@ export class canva extends Scene
                     // Remove the component since the addition is aborted
                 }
             };
-    
             this.input.on('pointermove', handlePointerMove);
             this.input.on('pointerdown', handlePointerDown);
             this.input.keyboard?.on('keydown-ESC', handleEscape);
@@ -354,7 +376,6 @@ export class canva extends Scene
         }
     }
     
-
     /******************************************************************
      * 
                         ** Overlay Div Properties **

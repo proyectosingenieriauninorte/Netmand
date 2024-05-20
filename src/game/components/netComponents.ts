@@ -95,6 +95,7 @@ export class Switch extends ImageManager {
     connectedPcs: Pc[] = [];
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     ports: {object: Pc | Router | null, vlan: string;}[];
+    targetPort: number = 0;
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
@@ -209,6 +210,7 @@ export class Router extends ImageManager {
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     ports: (Router | Switch | null)[];
+    targetPort: number = 0;
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
@@ -306,100 +308,76 @@ export class Router extends ImageManager {
     }
 }
 
-export class Cable{
-    scene: Scene;
-    startCoordinates: { x: number, y: number} = { x: 0, y: 0};
+
+export class Cable {
+    scene: Phaser.Scene;
+    startCoordinates: { x: number, y: number } = { x: 0, y: 0 };
     startComponent: Pc | Switch | Router | undefined = undefined;
-    endCoordinates: { x: number, y: number} = { x: 0, y: 0};
+    endCoordinates: { x: number, y: number } = { x: 0, y: 0 };
     endComponent: Pc | Switch | Router | undefined = undefined;
-    graphics: Phaser.GameObjects.Graphics;
+    private line: Phaser.GameObjects.Graphics;
+    private interactiveArea: Phaser.GameObjects.Zone;
+    private selected: boolean = false;
 
-    private tween: Phaser.Tweens.Tween | undefined;
-    private color: number = 0xF71C1C;
-    duration: number = 150;
-
-
-    constructor(scene: Scene, startCoordinates: { x: number, y: number}) {
+    constructor(scene: Phaser.Scene, startCoordinates: { x: number, y: number }) {
         this.scene = scene;
         this.startCoordinates = startCoordinates;
         this.endCoordinates = startCoordinates;
-        this.graphics = this.scene.add.graphics();
-        this.graphics.setDepth(-1);
-        window.addEventListener('mousemove', this.updateCablePosition.bind(this));
-        this.animate();
+        this.line = scene.add.graphics();
+        this.interactiveArea = scene.add.zone(0, 0, 1, 1).setOrigin(0.5, 0.5); // Center the origin
+        this.draw();
+
+        // Add interactivity
+        this.interactiveArea.setInteractive({ useHandCursor: true });
+        this.interactiveArea.on('pointerdown', this.onSelect, this);
     }
 
-    public StartCoordinates(startCoordinates: { x: number, y: number}) {
-        this.startCoordinates = startCoordinates;
+    private draw(): void {
+        this.line.clear();
+        this.line.lineStyle(5, this.selected ? 0xff0000 : 0x000000); // Red if selected, black otherwise
+        this.line.strokeLineShape(new Phaser.Geom.Line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y));
+
+        // Update the interactive area to cover the line
+        const lineLength = Phaser.Math.Distance.Between(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
+        const midPointX = (this.startCoordinates.x + this.endCoordinates.x) / 2;
+        const midPointY = (this.startCoordinates.y + this.endCoordinates.y) / 2;
+
+        // Set the interactive area's position and size
+        this.interactiveArea.setPosition(midPointX, midPointY);
+        this.interactiveArea.setSize(lineLength, 20); // Height of 20 for easier interaction
+
+        // Rotate the interactive area to match the line's angle
+        const angle = Phaser.Math.Angle.Between(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
+        this.interactiveArea.setRotation(angle);
+    }
+
+    private onSelect(): void {
+        this.selected = !this.selected;
         this.draw();
     }
 
-    public EndCoordinates(endCoordinates: { x: number, y: number}) {
-        this.endCoordinates = endCoordinates;
+    public updateStartCoordinates(newCoordinates: { x: number, y: number }): void {
+        this.startCoordinates = newCoordinates;
         this.draw();
     }
 
-    private draw() {
-        this.graphics.clear();
-        this.graphics.lineStyle(5, this.color);
-        this.graphics.beginPath();
-        this.graphics.moveTo(
-            this.startCoordinates.x,
-            this.startCoordinates.y 
-        );
-        this.graphics.lineTo(
-            this.endCoordinates.x,
-            this.endCoordinates.y
-        );
-        this.graphics.closePath();
-        this.graphics.strokePath();
-
+    public updateEndCoordinates(newCoordinates: { x: number, y: number }): void {
+        this.endCoordinates = newCoordinates;
+        this.draw();
     }
 
-    destroy() {
-        this.graphics.destroy();
+    public setStartComponent(component: Pc | Switch | Router): void {
+        this.startComponent = component;
+        // Additional logic if needed when setting the component
     }
 
-    private updateCablePosition(){
-        if (this.startComponent !== undefined && this.endComponent !== undefined) {
-            // Update coordinates if components' positions change
-            if (this.startComponent.image.x !== this.startCoordinates.x || this.startComponent.image.y !== this.startCoordinates.y) {
-                this.StartCoordinates({ x: this.startComponent.image.x, y: this.startComponent.image.y });
-            }else if (this.endComponent.image.x !== this.endCoordinates.x || this.endComponent.image.y !== this.endCoordinates.y) {
-                this.EndCoordinates({ x: this.endComponent.image.x, y: this.endComponent.image.y });
-            }
-        }
+    public setEndComponent(component: Pc | Switch | Router): void {
+        this.endComponent = component;
+        // Additional logic if needed when setting the component
     }
 
-    private animate() {
-        if (this.tween) {
-            this.tween.stop();
-        }
-
-        this.tween = this.scene.tweens.add({
-            targets: this.graphics,
-            alpha: 0,
-            duration: this.duration,
-            yoyo: true,
-            repeat: -1 
-        });
-    }
-
-    public stopAnimation() {
-        if (this.tween) {
-            this.tween.stop();
-            this.graphics.alpha = 1;
-            this.color = 0x0DF42D;
-            this.graphics.clear(); // Clear existing graphics
-            this.graphics.lineStyle(5, this.color); // Set new stroke style (color)
-            // Redraw the cable
-            this.graphics.beginPath();
-            this.graphics.moveTo(this.startCoordinates.x, this.startCoordinates.y);
-            this.graphics.lineTo(this.endCoordinates.x, this.endCoordinates.y);
-            this.graphics.closePath();
-            this.graphics.strokePath();
-        }
+    public destroy(): void {
+        this.line.destroy();
+        this.interactiveArea.destroy();
     }
 }
-
-
