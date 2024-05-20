@@ -24,6 +24,7 @@ export const AlertDemo: FC<AlertDemoProps> = ({ message }) => {
         };
 
         const hideAlertHandler = () => {
+            console.log('hide alert');
             const dialogElement = document.getElementById('alert-dialog');
             if (dialogElement) {
                 dialogElement.classList.remove('visible');

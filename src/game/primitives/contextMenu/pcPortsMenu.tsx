@@ -72,7 +72,6 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
     }) => {
       const menu = document.getElementById('pcPorts');
       if (menu) {
-        console.log('menu', menu);
         menu.style.left = `${data.x}px`;
         menu.style.top = `${data.y}px`;
         menu.style.width = `${data.width}px`;
