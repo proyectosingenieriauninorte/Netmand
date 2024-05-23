@@ -3,10 +3,12 @@ import * as ContextMenu from '@radix-ui/react-context-menu';
 import { DotFilledIcon } from '@radix-ui/react-icons';
 import { EventBus } from '@/game/EventBus';
 import './styles.css';
+import { Key } from 'lucide-react';
 
 interface SwitchPortMenuProps {
   style?: React.CSSProperties;
 }
+
 
 const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
   const [menuCoordinates, setMenuCoordinates] = useState<{
@@ -61,6 +63,13 @@ const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
     return { x, y };
   };
 
+  const selectedPort = (key: number) => () => {
+    EventBus.emit('selectedPort', key);
+    console.log('selected port', key);
+    hidePorts();
+  }
+  
+
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -84,11 +93,13 @@ const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
       setMenuCoordinates(data);
 
       // Programmatically trigger the context menu
-      if (contextMenuTrigger) {
-        const { x, y } = adjustCoordinates(data.clientX, data.clientY, data.width, data.height);
-        const event = new MouseEvent('contextmenu', { bubbles: true, clientX: x, clientY: y });
-        contextMenuTrigger.dispatchEvent(event);
-      }
+      setTimeout(() => {
+        if (contextMenuTrigger) {
+          const { x, y } = adjustCoordinates(data.clientX, data.clientY, data.width, data.height);
+          const event = new MouseEvent('contextmenu', { bubbles: true, clientX: x, clientY: y });
+          contextMenuTrigger.dispatchEvent(event);
+        }
+      }, 100);
     };
 
     EventBus.on('displayPorts', showPorts);
@@ -123,7 +134,7 @@ const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
           <ContextMenu.Content className="ContextMenuContent">
             {menuCoordinates.ports.map((port, index) => (
               port.object === null && (
-                <ContextMenu.Item key={index} className="ContextMenuItem">
+                <ContextMenu.Item key={index} className="ContextMenuItem" onClick={selectedPort(index)}>
                   <DotFilledIcon className="mr-2 h-4 w-4" />
                   FastEthernet <div className="RightSlot">0/{index + 1}</div>
                 </ContextMenu.Item>

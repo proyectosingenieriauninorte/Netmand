@@ -11,6 +11,7 @@ export class Pc extends ImageManager {
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text;
     ports: (Switch| null)[];
+    targetPort: number = 0;
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
@@ -39,6 +40,19 @@ export class Pc extends ImageManager {
             this.text.x = x;
             this.text.y = y;
             this.scene.children.bringToTop(this.text);
+        }
+    }
+    
+    public connectToPort(portIndex: number, object: Switch) {
+        if (portIndex == 0) { // Ensure portIndex is within bounds
+            this.ports[portIndex] = object;
+        }
+    }
+
+    // Method to disconnect an object from a port
+    public disconnectFromPort(portIndex: number) {
+        if (portIndex == 0 ) { // Ensure portIndex is within bounds
+            this.ports[portIndex] = null;
         }
     }
 
@@ -91,8 +105,6 @@ export class Switch extends ImageManager {
     y: number;
     identifier: number;
     image: Phaser.GameObjects.Image;
-    vlan: string = '';
-    connectedPcs: Pc[] = [];
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     ports: {object: Pc | Router | null, vlan: string;}[];
     targetPort: number = 0;
@@ -312,24 +324,26 @@ export class Router extends ImageManager {
 export class Cable {
     scene: Phaser.Scene;
     startCoordinates: { x: number, y: number } = { x: 0, y: 0 };
-    startComponent: Pc | Switch | Router | undefined = undefined;
+    startComponent: Pc | Switch | Router ;
     endCoordinates: { x: number, y: number } = { x: 0, y: 0 };
-    endComponent: Pc | Switch | Router | undefined = undefined;
+    endComponent: Pc | Switch | Router ;
+    identifier: number;
     private line: Phaser.GameObjects.Graphics;
     private interactiveArea: Phaser.GameObjects.Zone;
     private selected: boolean = false;
 
-    constructor(scene: Phaser.Scene, startCoordinates: { x: number, y: number }) {
+    constructor(scene: Phaser.Scene, identifier:number, startCoordinates: { x: number, y: number }) {
         this.scene = scene;
         this.startCoordinates = startCoordinates;
-        this.endCoordinates = startCoordinates;
+        this.endCoordinates = {x: startCoordinates.x + 1, y: startCoordinates.y + 1};
+        this.identifier = identifier;
         this.line = scene.add.graphics();
         this.interactiveArea = scene.add.zone(0, 0, 1, 1).setOrigin(0.5, 0.5); // Center the origin
         this.draw();
 
-        // Add interactivity
         this.interactiveArea.setInteractive({ useHandCursor: true });
         this.interactiveArea.on('pointerdown', this.onSelect, this);
+        window.addEventListener('mousemove', this.update.bind(this));
     }
 
     private draw(): void {
@@ -353,6 +367,22 @@ export class Cable {
 
     private onSelect(): void {
         this.selected = !this.selected;
+        this.draw();
+    }
+
+    public update(): void {
+        if (this.startComponent) {
+            const { x: startX, y: startY } = this.startComponent.image; // Assuming components have an `image` property
+            if (this.startCoordinates.x !== startX || this.startCoordinates.y !== startY) {
+                this.startCoordinates = { x: startX, y: startY };
+            }
+        }
+        if (this.endComponent) {
+            const { x: endX, y: endY } = this.endComponent.image;
+            if (this.endCoordinates.x !== endX || this.endCoordinates.y !== endY) {
+                this.endCoordinates = { x: endX, y: endY };
+            }
+        }
         this.draw();
     }
 

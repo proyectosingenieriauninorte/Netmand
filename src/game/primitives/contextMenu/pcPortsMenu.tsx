@@ -59,6 +59,11 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
     return { x, y };
   };
 
+  const selectedPort = (key: number) => () => {
+    EventBus.emit('selectedPort', key);
+    hidePorts();
+  }
+
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -81,11 +86,13 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
       setMenuCoordinates(data);
 
       // Programmatically trigger the context menu
-      if (contextMenuTrigger) {
-        const { x, y } = adjustCoordinates(data.clientX, data.clientY, data.width, data.height);
-        const event = new MouseEvent('contextmenu', { bubbles: true, clientX: x, clientY: y});
-        contextMenuTrigger.dispatchEvent(event);
-      }
+      setTimeout(() => {
+        if (contextMenuTrigger) {
+          const { x, y } = adjustCoordinates(data.clientX, data.clientY, data.width, data.height);
+          const event = new MouseEvent('contextmenu', { bubbles: true, clientX: x, clientY: y });
+          contextMenuTrigger.dispatchEvent(event);
+        }
+      }, 100);
     };
 
     EventBus.on('showPcPorts', showPorts);
@@ -118,7 +125,7 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
         ></ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className="ContextMenuContent">
-            <ContextMenu.Item className="ContextMenuItem">
+            <ContextMenu.Item className="ContextMenuItem" onClick={selectedPort(0)}>
               <CheckIcon className="mr-2 h-4 w-4" />
               FastEthernet <div className="RightSlot">0/1</div>
             </ContextMenu.Item>

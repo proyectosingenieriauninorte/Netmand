@@ -4,10 +4,8 @@ import { EventBus } from '../EventBus';
 export class ImageManager{
     scene: Scene;
     image: Phaser.GameObjects.Image;
-    hola: boolean = false;
     dragBox: Phaser.GameObjects.Graphics;
     clickbox: Phaser.GameObjects.Graphics;
-    isAconnectionBeingEstablished: boolean = false;
 
     constructor(scene: Scene, image: Phaser.GameObjects.Image) {
         this.scene = scene;
@@ -16,12 +14,7 @@ export class ImageManager{
         this.createDragBox();
         this.scene.input.on('drag', this.handleDrag.bind(this));
         this.scene.input.on('dragstart', this.startDrag.bind(this));
-        this.scene.input.on('dragend', (imageGameObject: Phaser.GameObjects.Image) => {
-                this.dragBox.setVisible(false);
-            if(!this.isAconnectionBeingEstablished){ // to prevent the current addin cable message from being hidden
-                EventBus.emit('hideAlert');
-            }
-        });
+        this.scene.input.on('dragend', this.endDrag.bind(this));
         
         this.image.on('pointerdown', this.clickBox.bind(this));
 
@@ -82,6 +75,13 @@ export class ImageManager{
             if (propertiesMenu) {
                 propertiesMenu.style.display = 'none';
             }
+        }
+    }
+
+    private endDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
+        this.dragBox.setVisible(false);
+        if (imageGameObject === this.image) {
+            EventBus.emit('hideAlert');
         }
     }
     

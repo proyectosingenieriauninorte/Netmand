@@ -36,6 +36,36 @@ const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
     }
   };
 
+  const adjustCoordinates = (x: number, y: number, menuWidth: number, menuHeight: number) => {
+    const canvas = document.getElementById('canvas');
+    if (!canvas) return { x, y };
+
+    const canvasRect = canvas.getBoundingClientRect();
+
+    // Adjust coordinates if the menu goes out of bounds
+    if (x + menuWidth > canvasRect.right) {
+      x = canvasRect.right - menuWidth;
+    }
+    if (y + menuHeight > canvasRect.bottom) {
+      y = canvasRect.bottom - menuHeight;
+    }
+
+    // Ensure menu doesn't go above or to the left of the canvas
+    if (x < canvasRect.left) {
+      x = canvasRect.left;
+    }
+    if (y < canvasRect.top) {
+      y = canvasRect.top;
+    }
+
+    return { x, y };
+  };
+
+  const selectedPort = (key: number) => () => {
+    EventBus.emit('selectedPort', key);
+    hidePorts();
+  }
+
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -59,10 +89,13 @@ const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
       setMenuCoordinates(data);
 
       // Programmatically trigger the context menu
-      if (contextMenuTrigger) {
-        const event = new MouseEvent('contextmenu', { bubbles: true, clientX: data.clientX, clientY: data.clientY });
-        contextMenuTrigger.dispatchEvent(event);
-      }
+      setTimeout(() => {
+        if (contextMenuTrigger) {
+          const { x, y } = adjustCoordinates(data.clientX, data.clientY, data.width, data.height);
+          const event = new MouseEvent('contextmenu', { bubbles: true, clientX: x, clientY: y });
+          contextMenuTrigger.dispatchEvent(event);
+        }
+      }, 100);
     };
 
     EventBus.on('displayRouterPorts', showPorts);
@@ -101,7 +134,7 @@ const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
           <ContextMenu.Content className="ContextMenuContent">
             {menuCoordinates.ports.map((port, index) => (
               port === null && (
-                <ContextMenu.Item key={index} className="ContextMenuItem">
+                <ContextMenu.Item key={index} className="ContextMenuItem" onClick={selectedPort(index)}>
                   <DotFilledIcon className="mr-2 h-4 w-4" />
                   FastEthernet <div className="RightSlot">0/{index + 1}</div>
                 </ContextMenu.Item>
