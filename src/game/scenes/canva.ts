@@ -193,8 +193,8 @@ export class canva extends Scene
         console.log('cables', this.cables);
     }
 
-    private updatePortsAvailability(startComponent: Pc | Switch | Router, endComponent: Pc | Switch | Router | null = null) {
-       
+    private updatePortsAvailability(startComponent: Pc | Switch | Router | null , endComponent: Pc | Switch | Router | null ) {
+
         /* 
         If the startComponent is a PC, then we need to update the port availability 
         for the switch it is connected to.
@@ -301,6 +301,12 @@ export class canva extends Scene
                     }else{
                         component.displayPorts(this.input.activePointer);
                         EventBus.once('selectedPort', (key: number) => {
+                            if (this.cableInProgress) {
+                                this.cableInProgress.setStartComponent(component);
+                                this.cableInProgress.updateStartCoordinates({ x: component.image.x, y: component.image.y });
+                                this.cableInProgress.updateEndCoordinates({ x: component.image.x, y: component.image.y });
+                                return; // Prevent multiple cables from being created
+                            }
                             this.cableInProgress = new Cable(this, this.cables.length, { x: component.image.x, y: component.image.y });
                             this.cableInProgress.setStartComponent(component);
                             this.cableInProgress.updateEndCoordinates({ x: component.image.x, y: component.image.y });
@@ -308,7 +314,6 @@ export class canva extends Scene
                             EventBus.emit('showAlert', message);
                         });
                     }
-
                 }else{
                     if(this.checkPortsAvailability(component) === false){
                         EventBus.emit('showAlert', 'No available ports. Press Escape to abort.');
@@ -322,7 +327,6 @@ export class canva extends Scene
                         // Listen for port selection on end component
                         EventBus.once('selectedPort', (key: number) => {
                             component.targetPort = key;
-                            console.log(`End port selected: ${key}`);
                                 
                             // Update component connections and finish cable creation
                             if(this.cableInProgress){
@@ -338,6 +342,8 @@ export class canva extends Scene
                             // Clean up event listeners
                             this.input.off('pointermove', handleCableMove);
                             this.input.off('pointerdown', handleCableCreation);
+
+                            console.log('cables', this.cables); 
                         });
                     }
                 }  
@@ -400,7 +406,7 @@ export class canva extends Scene
                             this.routers.find(router => router.image.getBounds().contains(pointer.worldX, pointer.worldY));
     }
 
-    private invalidConnections(startComponent: Pc | Switch | Router, endComponent: Pc | Switch | Router) {
+    private invalidConnections(startComponent: Pc | Switch | Router | null, endComponent: Pc | Switch | Router| null) {
         if ((startComponent instanceof Pc && endComponent instanceof Router) ||
             (startComponent instanceof Router && endComponent instanceof Pc) ||
             (startComponent instanceof Switch && endComponent instanceof Switch) ||

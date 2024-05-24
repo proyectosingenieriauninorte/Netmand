@@ -83,6 +83,7 @@ export class ImageManager{
         if (imageGameObject === this.image) {
             EventBus.emit('hideAlert');
         }
+        this.image.setDepth(-1);
     }
     
     private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
@@ -446,13 +447,14 @@ export class Router extends ImageManager {
 export class Cable {
     scene: Phaser.Scene;
     startCoordinates: { x: number, y: number } = { x: 0, y: 0 };
-    startComponent: Pc | Switch | Router ;
+    startComponent: Pc | Switch | Router | null = null;
     endCoordinates: { x: number, y: number } = { x: 0, y: 0 };
-    endComponent: Pc | Switch | Router ;
+    endComponent: Pc | Switch | Router  | null = null;
     identifier: number;
     private line: Phaser.GameObjects.Graphics;
     private interactiveArea: Phaser.GameObjects.Zone;
     private selected: boolean = false;
+    
 
     constructor(scene: Phaser.Scene, identifier:number, startCoordinates: { x: number, y: number }) {
         this.scene = scene;
@@ -466,13 +468,15 @@ export class Cable {
         this.interactiveArea.setInteractive({ useHandCursor: true });
         this.interactiveArea.on('pointerdown', this.onSelect, this);
         window.addEventListener('mousemove', this.update.bind(this));
+        this.scene.input.on('pointerdown', this.onCanvasClick, this);
+
     }
 
     private draw(): void {
         this.line.clear();
         this.line.lineStyle(5, this.selected ? 0xff0000 : 0x000000); // Red if selected, black otherwise
         this.line.strokeLineShape(new Phaser.Geom.Line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y));
-
+        
         // Update the interactive area to cover the line
         const lineLength = Phaser.Math.Distance.Between(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
         const midPointX = (this.startCoordinates.x + this.endCoordinates.x) / 2;
@@ -487,9 +491,19 @@ export class Cable {
         this.interactiveArea.setRotation(angle);
     }
 
-    private onSelect(): void {
+    private onSelect(event: KeyboardEvent): void {
+        //check if the current pointer x and y is within the bounds of the interactive area
         this.selected = !this.selected;
         this.draw();
+    }
+
+    private onCanvasClick(event: Phaser.Input.Pointer): void {
+        // Check if the click is outside the interactive area
+        const bounds = this.interactiveArea.getBounds();
+        if (!bounds.contains(event.worldX, event.worldY)) {
+            this.selected = false;
+            this.draw();
+        }
     }
 
     public update(): void {
@@ -531,5 +545,7 @@ export class Cable {
     public destroy(): void {
         this.line.destroy();
         this.interactiveArea.destroy();
+        this.startComponent = null;
+        this.endComponent = null;
     }
 }
