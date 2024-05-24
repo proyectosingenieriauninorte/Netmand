@@ -36,7 +36,7 @@ export class canva extends Scene
         EventBus.on('deleteComponent', (data: {x: number, y: number, obj: string, id: number}) => { 
             this.deleteComponentFromMenu(data); 
         });
-
+        
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
 
         // Delete component on key press
@@ -115,7 +115,7 @@ export class canva extends Scene
             const index = this.pc.indexOf(component);
             if (index !== -1) {
                 this.destroyComponentGraphics(component);
-                this.removeConnections(component);
+                this.removeCable(component);
                 this.pc.splice(index, 1);
                 this.updateIdentifiers(this.pc); // Update identifiers for PCs
             }
@@ -125,7 +125,7 @@ export class canva extends Scene
             const index = this.switches.indexOf(component);
             if (index !== -1) {
                 this.destroyComponentGraphics(component);
-                this.removeConnections(component);
+                this.removeCable(component);
                 this.switches.splice(index, 1);
                 this.updateIdentifiers(this.switches); // Update identifiers for Switches
             }
@@ -135,12 +135,19 @@ export class canva extends Scene
             const index = this.routers.indexOf(component);
             if (index !== -1) {
                 this.destroyComponentGraphics(component);
-                this.removeConnections(component);
+                this.removeCable(component);
                 this.routers.splice(index, 1);
                 this.updateIdentifiers(this.routers); // Update identifiers for Routers
             }
             return;
         }
+    }
+
+    private destroyComponentGraphics(component: Pc | Switch | Router) {   
+        component.image.destroy();
+        component.dragBox.destroy();
+        component.clickbox.destroy();
+        component.text.destroy();
     }
 
     private updateIdentifiers(components: (Pc | Switch | Router)[]) {
@@ -155,146 +162,90 @@ export class canva extends Scene
             }
         });
     }
-    
-    private destroyComponentGraphics(component: Pc | Switch | Router) {   
-        component.image.destroy();
-        component.dragBox.destroy();
-        component.clickbox.destroy();
-        component.text.destroy();
-    }
 
-    /*
     private removeCable(component: Pc | Switch | Router) {
-        this.cables.forEach(cable => {
-            if (cable.startComponent === component || cable.endComponent === component) {
-                const index = this.cables.indexOf(cable);
-                if (index !== -1) {
-                    cable.destroy();
-                    this.cables.splice(index, 1);
-                    this.updatePortsAvailability(component);
-                }
-                console.log('cables', this.cables.length);
-            }
-        });
-    }*/
-
-    private removeConnections(component: Pc | Switch | Router){
-        console.log('removing connections', component)
-        if(component instanceof Pc){
-            component.ports.forEach((port, index) => {
-                if(port instanceof Switch){
-                    this.removeCable(port);
-                }
-            });
-        }
-
-        if(component instanceof Switch){
-            component.ports.forEach((port, index) => {
-                if(port.object instanceof Pc){
-                    this.removeCable(port.object);
-                }
-                if(port.object instanceof Router){
-                    this.removeCable(port.object);
-                }
-            });
-        }
-
-        if(component instanceof Router){
-            component.ports.forEach((port, index) => {
-                if(port instanceof Switch){
-                    this.removeCable(port);
-                }
-                if(port instanceof Router){
-                    this.removeCable(port);
-                }
-            });
-        }
-
-        console.log(this.cables)
-
-    }
-
-    private removeCable(component : Pc | Switch | Router){
-        this.cables.forEach(cable => {
-            if(cable.startComponent === component || cable.endComponent === component){
-                const index = this.cables.indexOf(cable);
-                if(index !== -1){
-                    cable.destroy();
-                    this.cables.splice(index, 1);
-                    this.updatePortsAvailability(component);
-                }
-            }
-        });
-    }
-
-    private updatePortsAvailability(component: Pc | Switch | Router) {
-        // ***  this method is used for updating the ports between a connection ****
-
-        // update pc ports availability and switch ports availability        
-        if (component instanceof Pc) {
-            this.switches.forEach(switch_ => {
-                switch_.ports.forEach((port, index) => {
-                    if (port.object instanceof Pc && port.object === component) {
-                        switch_.disconnectFromPort(index);
-                        component.disconnectFromPort(0);
-                        return;
-                    }
-                });
-            });
-        }
-
-        /* If the component is switch:
-        if there are pc connected to it, update the pc connected status
-        if there are routers connected to it, update the router available ports
-        also update the switch's available ports 
-         */
-
-        if (component instanceof Switch) {
-            console.log(component)
-            // Update PCs connected to the removed switch
-            component.ports.forEach((port, index) => {
-                if (port.object instanceof Pc) {
-                    port.object.ports[0] = null;
-                    component.disconnectFromPort(index);
-                }
-            });
-            // Update the switch available ports for connected routers
-            this.routers.forEach(router => {
-                router.ports.forEach((port, index) => {
-                    if (port instanceof Switch && port === component) {
-                        router.disconnectFromPort(index);
-                        return;
-                    }
-                });
-            });
-            
-        }
-        /* If the component is router:
-        if there are switches connected to it, update the switch available ports
-        if there are routers connected to it, update the router available ports
-         */
-
-        if (component instanceof Router) {
-            // Update the switch available ports for connected switches
-            this.switches.forEach(switch_ => {
-                switch_.ports.forEach((port, index) => {
-                    if (port instanceof Router && port === component) {
-                        switch_.disconnectFromPort(index);
-                        return;
-                    }
-                });
-            });
+        const cablesToRemove = this.cables.filter(cable => 
+            cable.startComponent === component || cable.endComponent === component
+        );
     
-            // Update the router available ports for connected routers
-            this.routers.forEach(router => {
-                router.ports.forEach((port, index) => {
-                    if (port === component) {
-                        router.disconnectFromPort(index);
+        cablesToRemove.forEach(cable => {
+            console.log('executing')
+            const startComponent = cable.startComponent;
+            const endComponent = cable.endComponent;
+    
+            // Remove the cable
+            const index = this.cables.indexOf(cable);
+            if (index !== -1) {
+                this.cables.splice(index, 1);
+                cable.destroy();
+            }
+    
+            // Update port availability for both components
+            this.updatePortsAvailability(startComponent, endComponent);
+            this.updatePortsAvailability(endComponent, startComponent);
+        });
+
+        //update cable idenifiers
+        this.cables.forEach((cable, index) => {
+            cable.identifier = index;
+        });
+
+        console.log('cables', this.cables);
+    }
+
+    private updatePortsAvailability(startComponent: Pc | Switch | Router, endComponent: Pc | Switch | Router | null = null) {
+       
+        /* 
+        If the startComponent is a PC, then we need to update the port availability 
+        for the switch it is connected to.
+        */
+        if(startComponent instanceof Pc){
+           if(endComponent instanceof Switch){
+                endComponent.ports.forEach(port => {
+                    if(port.object === startComponent){
+                        port.object = null;
                         return;
                     }
                 });
-            });
+            }
         }
+        /*
+        If the startComponent is a Switch, then we need to update the port availability
+        of the pc or Router it is connected to. 
+        */
+        if(startComponent instanceof Switch){
+            if(endComponent instanceof Pc){
+                endComponent.ports[0] = null;
+            }
+            if(endComponent instanceof Router){
+                endComponent.ports.forEach((port, index)  => {
+                    if(port === startComponent){
+                        endComponent.ports[index] = null;
+                        return;
+                    }
+                });
+            }
+        }
+
+        if(startComponent instanceof Router){
+            if(endComponent instanceof Switch){
+                endComponent.ports.forEach((port, index) => {
+                    if(port.object === startComponent){
+                        endComponent.ports[index].object = null;
+                    }
+                });
+            }
+            if(endComponent instanceof Router){
+                endComponent.ports.forEach((port, index) => {
+                    if(port === startComponent){
+                        endComponent.ports[index] = null;
+                    }
+                });
+            }
+        }
+
+        console.log('startComponent', startComponent);
+        console.log('endComponent', endComponent);
     }
 
     /******************************************************************
@@ -319,106 +270,6 @@ export class canva extends Scene
                         ** ADD CABLES **
 
     ********************************************************************/
-
-    /*private addCable() {
-        if (this.isBeingAddedToCanvas) {
-            return;
-        }
-                        
-        let message = 'Adding Cable. Press Escape to abort.';
-        EventBus.emit('showAlert', message);
-        this.isBeingAddedToCanvas = true;
-                        
-        const handleCableMove = (pointer: Phaser.Input.Pointer) => {
-            if (this.cableInProgress) {
-                this.cableInProgress.updateEndCoordinates({ x: pointer.worldX, y: pointer.worldY });
-            }
-        };
-                        
-        const handleCableCreation = (pointer: Phaser.Input.Pointer) => {
-
-            const component = this.getComponentUnderPointer(pointer);
-            
-            if (component) {
-                if (!this.cableInProgress) {// Start cable creation
-                    component.isAconnectionBeingEstablished = true;
-                    EventBus.emit('showAlert', message);
-                    if(this.checkPortsAvailability(component) === false){ // check if the component has an available port
-                        EventBus.emit('showAlert', 'No available ports. Press Escape to abort.');
-                    }else{
-                        EventBus.emit('showAlert', message);
-                        component.displayPorts(this.input.activePointer);
-                        this.cableInProgress = new Cable(this, this.cables.length, { x: component.image.x, y: component.image.y });
-                        this.cableInProgress.setStartComponent(component);
-                        
-                        // Listen for port selection on start component
-                        EventBus.once('selectedPort', (key: number) => {
-                            component.isAconnectionBeingEstablished = true;
-                            component.targetPort = key;
-                            console.log(`Start port selected: ${key}`);
-                        });
-                    }
-                } else {// Finalize cable creation
-
-                    // Check if the connection is valid
-                    if (this.invalidConnections(this.cableInProgress.startComponent, component)) {
-                        EventBus.emit('showAlert', 'Invalid connection. Press Escape to abort.');
-
-                    // Check if the ports are available
-                    }else if(this.checkPortsAvailability(component) === false){
-                        EventBus.emit('hideAlert');
-                        EventBus.emit('showAlert', 'No available ports. Press Escape to abort.');
-                    
-                    // Everything is fine, continue with the cable creation
-                    }else{
-                        component.displayPorts(this.input.activePointer);
-                        this.cableInProgress.setEndComponent(component);
-                        this.cableInProgress.updateEndCoordinates({ x: component.image.x, y: component.image.y });
-                            
-                        // Listen for port selection on end component
-                        EventBus.once('selectedPort', (key: number) => {
-                            component.isAconnectionBeingEstablished = true;
-                            component.targetPort = key;
-                            console.log(`End port selected: ${key}`);
-                                
-                            // Update component connections and finish cable creation
-                            if(this.cableInProgress){
-                                this.updateComponentConnections(this.cableInProgress);
-                            }
-                            this.cableInProgress = null;
-                            this.isBeingAddedToCanvas = false;
-                            EventBus.emit('hideAlert');
-                                
-                            // Clean up event listeners
-                            this.input.off('pointermove', handleCableMove);
-                            this.input.off('pointerdown', handleCableCreation);
-                        });
-                    }
-                }
-            }
-        };
-                        
-        window.addEventListener('pointerdown', () => {handleCableCreation});
-        this.input.on('pointermove', handleCableMove);
-                        
-        //Cancel cable creation on ESC key press
-        this.input.keyboard?.on('keydown-ESC', () => {
-            if (this.cableInProgress) {
-                if(this.cableInProgress.startComponent){
-                    this.cableInProgress.startComponent.isAconnectionBeingEstablished = false;
-                }
-                if(this.cableInProgress.endComponent){
-                    this.cableInProgress.endComponent.isAconnectionBeingEstablished = false;
-                }
-                this.cableInProgress.destroy();
-            }
-            this.cableInProgress = null;
-            this.isBeingAddedToCanvas = false;
-            EventBus.emit('hideAlert');
-            this.input.off('pointermove', handleCableMove);
-            this.input.off('pointerdown', handleCableCreation);
-        });
-    }*/
 
     private addCable() {
 
@@ -496,8 +347,7 @@ export class canva extends Scene
         this.input.on('pointerdown', handleCableCreation);
         this.input.on('pointermove', handleCableMove);
 
-        //Cancel cable creation on ESC key press
-        this.input.keyboard?.on('keydown-ESC', () => {
+        const handleCancel = () => {
             if (this.cableInProgress) {
                 this.cableInProgress.destroy();
             }
@@ -508,6 +358,15 @@ export class canva extends Scene
             EventBus.emit('hideAlert');
             this.input.off('pointermove', handleCableMove);
             this.input.off('pointerdown', handleCableCreation);
+        }
+
+        //Cancel cable creation on ESC key press
+        this.input.keyboard?.on('keydown-ESC', () => {
+           handleCancel();
+        });
+
+        EventBus.once('abortCable', () => {
+            handleCancel();
         });
     }
 
@@ -567,13 +426,9 @@ export class canva extends Scene
         const startComponent = cable.startComponent;
         const endComponent = cable.endComponent;
 
-        console.log('startComponet port', startComponent.targetPort);
-        console.log('endComponent port', endComponent.targetPort);
-
         if(startComponent){
             if (startComponent instanceof Pc) {
                 if(endComponent instanceof Switch){
-                    console.log('PC to Switch');
                     startComponent.ports[0] = endComponent;
                     endComponent.ports[endComponent.targetPort].object = startComponent;
                 }

@@ -68,8 +68,11 @@ const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
     console.log('selected port', key);
     hidePorts();
   }
-  
 
+  const cancel= () => {
+    EventBus.emit('abortCable');
+  }
+  
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -141,7 +144,7 @@ const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
               )
             ))}
             <ContextMenu.Separator className="ContextMenuSeparator" />
-            <ContextMenu.Item className="ContextMenuItem">
+            <ContextMenu.Item className="ContextMenuItem" onClick={cancel}>
               Cancelar <div className="RightSlot">X</div>
             </ContextMenu.Item>
           </ContextMenu.Content>

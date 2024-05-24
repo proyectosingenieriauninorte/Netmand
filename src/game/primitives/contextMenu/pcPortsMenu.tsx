@@ -64,6 +64,10 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
     hidePorts();
   }
 
+  const cancel= () => {
+    EventBus.emit('abortCable');
+  }
+
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -130,7 +134,7 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
               FastEthernet <div className="RightSlot">0/1</div>
             </ContextMenu.Item>
             <ContextMenu.Separator className="ContextMenuSeparator" />
-            <ContextMenu.Item className="ContextMenuItem">
+            <ContextMenu.Item className="ContextMenuItem" onClick={cancel}>
               <EraserIcon className="mr-2 h-4 w-4" />
               Cancelar <div className="RightSlot">X</div>
             </ContextMenu.Item>

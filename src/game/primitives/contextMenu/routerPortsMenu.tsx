@@ -66,6 +66,10 @@ const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
     hidePorts();
   }
 
+  const cancel = () => {
+    EventBus.emit('abortCable');
+  }
+
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -117,10 +121,6 @@ const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
       });
     };
   }, [contextMenuTrigger]);
-
-  const cancel = () => {
-    EventBus.emit('cancelDisplayRouterPorts');
-  }
 
   return (
     <div id="routerPorts" style={{ display: 'none', position: 'absolute'}}>
