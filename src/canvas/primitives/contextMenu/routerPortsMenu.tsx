@@ -1,7 +1,7 @@
 import React, { useEffect, useState, FC } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { DotFilledIcon } from '@radix-ui/react-icons';
-import { EventBus } from '@/game/EventBus';
+import { EventBus } from '@/canvas/EventBus';
 import './styles.css';
 
 interface RouterPortMenuProps {

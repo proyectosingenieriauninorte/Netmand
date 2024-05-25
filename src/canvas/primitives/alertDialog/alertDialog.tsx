@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { use } from "matter";
 import { FC, forwardRef, useImperativeHandle, useEffect, useState } from 'react';
-import { EventBus } from "@/game/EventBus";
+import { EventBus } from "@/canvas/EventBus";
 import './styles.css';
 
 interface AlertDialogProps {

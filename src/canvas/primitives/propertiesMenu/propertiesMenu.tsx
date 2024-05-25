@@ -1,6 +1,6 @@
 import { FC, useEffect, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { EventBus } from '@/game/EventBus';
+import { EventBus } from '@/canvas/EventBus';
 import './styles.css';
 import { Settings, EraserIcon } from 'lucide-react';
 
@@ -79,13 +79,26 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
     hideMenu();
   };
 
+  const handleSettings = () => {
+    console.log(menuCoordinates);
+    if(menuCoordinates.type === 'Pc') {
+      EventBus.emit('showPc');
+    }
+    if(menuCoordinates.type === 'Switch') {
+      EventBus.emit('showSwitch');
+    }
+    if(menuCoordinates.type === 'Router') {
+      EventBus.emit('showRouter');
+    }
+  }
+
   return (
     <div id="comp-properties" style={{ position: 'absolute', display: 'none' }}>
       <ContextMenu.Root>
         <ContextMenu.Trigger className="ContextMenuTrigger" style={style}></ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className="ContextMenuContent">
-            <ContextMenu.Item className="ContextMenuItem">
+            <ContextMenu.Item className="ContextMenuItem" onClick={handleSettings}>
               <Settings className="mr-2 h-4 w-4" />
               Settings <div className="RightSlot"></div>
             </ContextMenu.Item>

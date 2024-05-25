@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/alert";
 import './styles.css';
 import { Terminal } from "lucide-react";
-import { EventBus } from "@/game/EventBus";
+import { EventBus } from "@/canvas/EventBus";
 
 interface AlertDemoProps {
     message: string | null;

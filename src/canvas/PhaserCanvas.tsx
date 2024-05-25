@@ -7,6 +7,10 @@ import {AlertDialogDemo} from './primitives/alertDialog/alertDialog';
 import PcPortMenu from './primitives/contextMenu/pcPortsMenu';
 import SwitchPortMenu from './primitives/contextMenu/switchPortsMenu';
 import RouterPortMenu from './primitives/contextMenu/routerPortsMenu';
+import PcProperties from './primitives/componentProperties/pcMenuProp';
+import SwitchProperties from './primitives/componentProperties/switchMenuProp';
+import ToolbarDemo from './primitives/toolbar/toolbar';
+import { SheetSide } from './primitives/sheet/sheet';
 
 export interface IRefPhaserGame {
     game: Phaser.Game | null;
@@ -122,8 +126,12 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 {<PcPortMenu style={{ position: 'absolute', top: '0px', left: '0px', pointerEvents: 'auto'}} />}{/* Conditionally render PcPortMenu */}
                 {<SwitchPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchPortMenu */}
                 {<RouterPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterPortMenu */}
+                {<PcProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render PcProperties */}
+                {<SwitchProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchProperties */}
+                {<ToolbarDemo style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render ToolbarDemo */}
+                {<SheetSide style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SheetSide */}
             </div>
-            
         </div>
     );
 });
+

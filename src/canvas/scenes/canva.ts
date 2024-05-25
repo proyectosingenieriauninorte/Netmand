@@ -27,7 +27,6 @@ export class canva extends Scene
 
     create (){   
 
-        this.input.on('wheel', this.zoom, this);
         //this.input.on('pointerdown', this.componentDropMenu.bind(this));
 
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
@@ -38,6 +37,12 @@ export class canva extends Scene
         });
         
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
+        EventBus.on('sliderChange', (value: number) => {
+            // Map the slider value (0-100) to the zoom range (0.6-2)
+            const newZoom = Phaser.Math.Linear(0.6, 2, value / 100);
+            this._zoom = newZoom;
+            this.cameras.main.setZoom(this._zoom);
+        });
 
         // Delete component on key press
         /*this.input.keyboard?.on('keydown-BACKSPACE', () => {
@@ -262,6 +267,9 @@ export class canva extends Scene
         }
         this._zoom = Phaser.Math.Clamp(newZoom, 0.6, 2);
         this.cameras.main.setZoom(this._zoom);
+
+        EventBus.emit('updateZoom', this._zoom);
+
         console.log(this.switches[0])
     }
 

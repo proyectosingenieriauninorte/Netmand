@@ -136,7 +136,11 @@ export class Pc extends ImageManager {
     text: Phaser.GameObjects.Text;
     ports: (Switch| null)[];
     targetPort: number = 0;
-
+    mask: string = '';
+    ip: string = '';
+    net: string = '';
+    gateway: string = '';
+    
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
         super(scene, image);
         this.scene = scene;
@@ -147,6 +151,17 @@ export class Pc extends ImageManager {
 
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
+        EventBus.on('showPc', this.showPcProperties.bind(this));
+    }
+
+    private showPcProperties() {
+        EventBus.emit('showPcProperties', {
+            ip: this.ip,
+            mask: this.mask,
+            net: this.net,
+            gateway: this.gateway,
+            identifier: this.identifier
+        });
     }
 
     private addText() {
@@ -230,7 +245,13 @@ export class Switch extends ImageManager {
     identifier: number;
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-    ports: {object: Pc | Router | null, vlan: string;}[];
+    ports: {object: Pc | Router | null, 
+        vlan: string, 
+        Speed: string, 
+        duplex: string,
+        description: string
+        status: string
+        mode: string}[];
     targetPort: number = 0;
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
@@ -238,11 +259,26 @@ export class Switch extends ImageManager {
         this.scene = scene;
         this.identifier = identifier;
         this.image = image;
-        this.ports = new Array(24).fill(null).map(() => ({ object: null, vlan: '' }));
+        this.ports = new Array(24).fill(null).map(() => ({ object: null, 
+            vlan: '', 
+            Speed: '', 
+            duplex: '',
+            description: '',
+            status: '',
+            mode: ''
+        }));
         this.addText();
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
+        EventBus.on('showSwitch', this.showSwitchProperties.bind(this));
+    }
+
+    private showSwitchProperties() {
+        EventBus.emit('showSwitchProperties', {
+            ports: this.ports,
+            identifier: this.identifier
+        });
     }
 
     private addText() {
@@ -263,19 +299,6 @@ export class Switch extends ImageManager {
         }
     }
 
-    // Method to connect an object to a port
-    public connectToPort(portIndex: number, object: Pc | Router, vlan: string) {
-        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            this.ports[portIndex] = { object, vlan };
-        }
-    }
-
-    // Method to disconnect an object from a port
-    public disconnectFromPort(portIndex: number) {
-        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            this.ports[portIndex] = { object: null, vlan: '' };
-        }
-    }
 
     // Method to get the object connected to a port
     public getObjectConnectedToPort(portIndex: number): Pc | Router | null {
@@ -444,6 +467,7 @@ export class Router extends ImageManager {
     }
 }
 
+
 export class Cable {
     scene: Phaser.Scene;
     startCoordinates: { x: number, y: number } = { x: 0, y: 0 };
@@ -498,14 +522,24 @@ export class Cable {
     }
 
     private onCanvasClick(event: Phaser.Input.Pointer): void {
-        // Check if the click is outside the interactive area
-        const bounds = this.interactiveArea.getBounds();
-        if (!bounds.contains(event.worldX, event.worldY)) {
+        // Check if the click is outside the line and deselect it
+        const isOutsideLine = this.isPointOutsideLine(event.worldX, event.worldY);
+        console.log(isOutsideLine);
+        if (isOutsideLine) {
             this.selected = false;
             this.draw();
         }
     }
 
+    private isPointOutsideLine(x: number, y: number): boolean {
+        const { x: startX, y: startY } = this.startCoordinates;
+        const { x: endX, y: endY } = this.endCoordinates;
+        const distanceFromStart = Phaser.Math.Distance.Between(startX, startY, x, y);
+        const distanceFromEnd = Phaser.Math.Distance.Between(endX, endY, x, y);
+        const lineLength = Phaser.Math.Distance.Between(startX, startY, endX, endY);
+        console.log(distanceFromStart, distanceFromEnd, lineLength);
+        return distanceFromStart > 10 || distanceFromEnd > 10;
+    }
     public update(): void {
         if (this.startComponent) {
             const { x: startX, y: startY } = this.startComponent.image; // Assuming components have an `image` property

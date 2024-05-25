@@ -1,0 +1,97 @@
+@import '@radix-ui/colors/black-alpha.css';
+@import '@radix-ui/colors/mauve.css';
+@import '@radix-ui/colors/violet.css';
+
+.SheetSideContainer {
+  border-radius: 6px;
+  background-color: white;
+  box-shadow: 0 2px 10px var(--black-a7);
+}
+
+.Sheet {
+  border-radius: 6px;
+  background-color: white;
+  box-shadow: 0 2px 10px var(--black-a7);
+}
+
+.MenubarSeparator {
+  width: 1px;
+  background-color:aliceblue;
+  margin: 0 10px;
+}
+
+.SheetButton {
+  flex: 0 0 auto;
+  color: var(--mauve-11);
+  padding: 0 10px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.SheetButton:hover {
+  background-color: var(--violet-3);
+  color: var(--violet-11);
+}
+
+.SheetContent {
+  padding: 20px;
+  border-radius: 6px;
+  background-color: var(--mauve-1);
+  box-shadow: 0 2px 10px var(--black-a7);
+}
+
+.SheetHeader {
+  margin-bottom: 16px;
+}
+
+.SheetTitle {
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--mauve-12);
+}
+
+.SheetDescription {
+  font-size: 14px;
+  color: var(--mauve-11);
+}
+
+.SheetForm {
+  padding: 16px 0;
+}
+
+.Label {
+  font-size: 14px;
+  color: var(--mauve-12);
+}
+
+.Input {
+  border: 1px solid var(--mauve-6);
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.SheetFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+}
+
+.SaveButton {
+  padding-left: 10px;
+  padding-right: 10px;
+  color: white;
+  background-color: var(--violet-9);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.SaveButton:hover {
+  background-color: var(--violet-10);
+  color: white;
+}

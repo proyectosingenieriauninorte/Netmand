@@ -1,14 +1,16 @@
 import React, { useEffect, useState, FC } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
-import { EraserIcon, CheckIcon } from '@radix-ui/react-icons';
-import { EventBus } from '@/game/EventBus';
+import { DotFilledIcon } from '@radix-ui/react-icons';
+import { EventBus } from '@/canvas/EventBus';
 import './styles.css';
+import { Key } from 'lucide-react';
 
-interface PcPortMenuProps {
+interface SwitchPortMenuProps {
   style?: React.CSSProperties;
 }
 
-const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
+
+const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
   const [menuCoordinates, setMenuCoordinates] = useState<{
     x: number;
     y: number;
@@ -16,19 +18,21 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
     height: number;
     type: string;
     id: number;
+    ports: { object: any, vlan: string }[];
   }>({
     x: 0,
     y: 0,
     width: 0,
     height: 0,
     type: '',
-    id: 0
+    id: 0,
+    ports: []
   });
 
   const [contextMenuTrigger, setContextMenuTrigger] = useState<HTMLDivElement | null>(null);
 
   const hidePorts = () => {
-    const menu = document.getElementById('pcPorts');
+    const menu = document.getElementById('switchPorts');
     if (menu) {
       menu.style.display = 'none';
     }
@@ -61,13 +65,14 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
 
   const selectedPort = (key: number) => () => {
     EventBus.emit('selectedPort', key);
+    console.log('selected port', key);
     hidePorts();
   }
 
   const cancel= () => {
     EventBus.emit('abortCable');
   }
-
+  
   useEffect(() => {
     const showPorts = (data: {
       x: number;
@@ -76,10 +81,11 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
       height: number;
       type: string;
       id: number;
+      ports: { object: any, vlan: string }[];
       clientX: number;
       clientY: number;
     }) => {
-      const menu = document.getElementById('pcPorts');
+      const menu = document.getElementById('switchPorts');
       if (menu) {
         menu.style.left = `${data.x}px`;
         menu.style.top = `${data.y}px`;
@@ -99,43 +105,46 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
       }, 100);
     };
 
-    EventBus.on('showPcPorts', showPorts);
-    EventBus.on('hidePcPorts', hidePorts);
+    EventBus.on('displayPorts', showPorts);
+    EventBus.on('hidePorts', hidePorts);
 
     window.addEventListener('click', (e) => {
-      if (e.target !== document.getElementById('pcPorts')) {
+      if (e.target !== document.getElementById('switchPorts')) {
         hidePorts();
       }
     });
 
     return () => {
-      EventBus.off('showPcPorts', showPorts);
-      EventBus.off('hidePcPorts', hidePorts);
+      EventBus.off('displayPorts', showPorts);
+      EventBus.off('hidePorts', hidePorts);
       window.removeEventListener('click', (e) => {
-        if (e.target !== document.getElementById('pcPorts')) {
+        if (e.target !== document.getElementById('switchPorts')) {
           hidePorts();
         }
       });
     };
-  }, [menuCoordinates, contextMenuTrigger]);
+  }, [contextMenuTrigger]);
 
   return (
-    <div id="pcPorts" style={{display: 'none', position: 'absolute'}}>
+    <div id="switchPorts" style={{ display: 'none', position: 'absolute'}}>
       <ContextMenu.Root>
-        <ContextMenu.Trigger 
+        <ContextMenu.Trigger
           className="ContextMenuTrigger"
           style={style}
           ref={(instance: HTMLDivElement | null) => setContextMenuTrigger(instance)}
         ></ContextMenu.Trigger>
         <ContextMenu.Portal>
           <ContextMenu.Content className="ContextMenuContent">
-            <ContextMenu.Item className="ContextMenuItem" onClick={selectedPort(0)}>
-              <CheckIcon className="mr-2 h-4 w-4" />
-              FastEthernet <div className="RightSlot">0/1</div>
-            </ContextMenu.Item>
+            {menuCoordinates.ports.map((port, index) => (
+              port.object === null && (
+                <ContextMenu.Item key={index} className="ContextMenuItem" onClick={selectedPort(index)}>
+                  <DotFilledIcon className="mr-2 h-4 w-4" />
+                  FastEthernet <div className="RightSlot">0/{index + 1}</div>
+                </ContextMenu.Item>
+              )
+            ))}
             <ContextMenu.Separator className="ContextMenuSeparator" />
             <ContextMenu.Item className="ContextMenuItem" onClick={cancel}>
-              <EraserIcon className="mr-2 h-4 w-4" />
               Cancelar <div className="RightSlot">X</div>
             </ContextMenu.Item>
           </ContextMenu.Content>
@@ -145,4 +154,4 @@ const PcPortMenu: FC<PcPortMenuProps> = ({ style }) => {
   );
 };
 
-export default PcPortMenu;
+export default SwitchPortMenu;

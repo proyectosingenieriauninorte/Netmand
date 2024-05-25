@@ -153,7 +153,9 @@
 }
 
 .zoomout {
+    width: 100%;
     background-image: url('../../../public/assets/zoomout.png'); /* URL de la imagen para zoom out */
+    background-repeat: no-repeat;
     margin-right: 8px; /* Espacio entre la imagen y el input */
     filter: invert(93%) sepia(5%) saturate(49%) hue-rotate(336deg) brightness(85%) contrast(99%);
 }
