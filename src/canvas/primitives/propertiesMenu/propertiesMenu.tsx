@@ -2,7 +2,7 @@ import { FC, useEffect, useState } from 'react';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { EventBus } from '@/canvas/EventBus';
 import './styles.css';
-import { Settings, EraserIcon } from 'lucide-react';
+import { Settings, EraserIcon, ChevronsRightLeft } from 'lucide-react';
 
 interface PropertiesMenuProps {
   style?: React.CSSProperties;
@@ -53,7 +53,6 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
       setMenuCoordinates(data);
     };
 
-    
     EventBus.on('showPropertiesMenu', showMenu);
     EventBus.on('hidePropertiesMenu', hideMenu);
 
@@ -81,15 +80,11 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
 
   const handleSettings = () => {
     console.log(menuCoordinates);
-    if(menuCoordinates.type === 'Pc') {
-      EventBus.emit('showPc');
-    }
-    if(menuCoordinates.type === 'Switch') {
-      EventBus.emit('showSwitch');
-    }
-    if(menuCoordinates.type === 'Router') {
-      EventBus.emit('showRouter');
-    }
+    EventBus.emit('displayComponentProperties', {id: menuCoordinates.id, type: menuCoordinates.type});
+  }
+
+  const handleCommands = () => {
+    EventBus.emit('showCommands', menuCoordinates.id);
   }
 
   return (
@@ -101,6 +96,10 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
             <ContextMenu.Item className="ContextMenuItem" onClick={handleSettings}>
               <Settings className="mr-2 h-4 w-4" />
               Settings <div className="RightSlot"></div>
+            </ContextMenu.Item>
+            <ContextMenu.Item className="ContextMenuItem" onClick={handleCommands}>
+              <ChevronsRightLeft className="mr-2 h-4 w-4" />
+              Comandos <div className="RightSlot"></div>
             </ContextMenu.Item>
 
             <ContextMenu.Separator className="ContextMenuSeparator" />

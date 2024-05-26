@@ -8,7 +8,7 @@ import PcPortMenu from './primitives/contextMenu/pcPortsMenu';
 import SwitchPortMenu from './primitives/contextMenu/switchPortsMenu';
 import RouterPortMenu from './primitives/contextMenu/routerPortsMenu';
 import PcProperties from './primitives/componentProperties/pcMenuProp';
-import SwitchProperties from './primitives/componentProperties/switchMenuProp';
+import SwitchProperties from './primitives/componentProperties/switch/switchMenuProp';
 import ToolbarDemo from './primitives/toolbar/toolbar';
 import { SheetSide } from './primitives/sheet/sheet';
 

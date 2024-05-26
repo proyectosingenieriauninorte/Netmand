@@ -26,6 +26,11 @@ export const AlertDialogDemo: FC<AlertDialogProps> = forwardRef((_, ref) => {
     const confirmAction = () => {
         () => setOpen(false);
         EventBus.emit('confirmDeletion');
+
+        EventBus.emit('showAlert', 'Component deleted successfully!');
+        setTimeout(() => {
+          EventBus.emit('hideAlert');
+        }, 3000);
     }
 
     useEffect(() => {

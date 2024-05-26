@@ -138,7 +138,6 @@ export class Pc extends ImageManager {
     targetPort: number = 0;
     mask: string = '';
     ip: string = '';
-    net: string = '';
     gateway: string = '';
     
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
@@ -151,17 +150,22 @@ export class Pc extends ImageManager {
 
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
-        EventBus.on('showPc', this.showPcProperties.bind(this));
     }
 
-    private showPcProperties() {
+    public showPcProperties() {
         EventBus.emit('showPcProperties', {
             ip: this.ip,
             mask: this.mask,
-            net: this.net,
             gateway: this.gateway,
-            identifier: this.identifier
+            identifier: this.identifier,
+            type: 'Pc'
         });
+    }
+
+    public updateProperties(data: { ip: string, mask: string, gateway: string }) {
+        this.ip = data.ip;
+        this.mask = data.mask;
+        this.gateway = data.gateway;
     }
 
     private addText() {
@@ -235,7 +239,6 @@ export class Pc extends ImageManager {
             clientX: e.clientX,
             clientY: e.clientY}); 
     }
-
 }
 
 export class Switch extends ImageManager {
@@ -247,7 +250,7 @@ export class Switch extends ImageManager {
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     ports: {object: Pc | Router | null, 
         vlan: string, 
-        Speed: string, 
+        speed: string, 
         duplex: string,
         description: string
         status: string
@@ -261,7 +264,7 @@ export class Switch extends ImageManager {
         this.image = image;
         this.ports = new Array(24).fill(null).map(() => ({ object: null, 
             vlan: '', 
-            Speed: '', 
+            speed: '', 
             duplex: '',
             description: '',
             status: '',
@@ -271,10 +274,13 @@ export class Switch extends ImageManager {
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
-        EventBus.on('showSwitch', this.showSwitchProperties.bind(this));
     }
 
-    private showSwitchProperties() {
+    public updateProperties(data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]}) {
+        this.ports = data.ports;
+    }
+
+    public showSwitchProperties() {
         EventBus.emit('showSwitchProperties', {
             ports: this.ports,
             identifier: this.identifier
@@ -298,7 +304,6 @@ export class Switch extends ImageManager {
             this.scene.children.bringToTop(this.text);
         }
     }
-
 
     // Method to get the object connected to a port
     public getObjectConnectedToPort(portIndex: number): Pc | Router | null {
@@ -467,7 +472,6 @@ export class Router extends ImageManager {
     }
 }
 
-
 export class Cable {
     scene: Phaser.Scene;
     startCoordinates: { x: number, y: number } = { x: 0, y: 0 };
@@ -583,3 +587,4 @@ export class Cable {
         this.endComponent = null;
     }
 }
+

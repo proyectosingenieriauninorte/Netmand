@@ -12,6 +12,7 @@ export class canva extends Scene
     private switches: Switch[] = [];
     private routers: Router[] = [];
     private cables: Cable[] = [];
+    private vlans: string[] = [];
     private isBeingAddedToCanvas: boolean = false;
     private cableInProgress: Cable | null = null;
     constructor (){super('canva');}
@@ -28,14 +29,12 @@ export class canva extends Scene
     create (){   
 
         //this.input.on('pointerdown', this.componentDropMenu.bind(this));
-
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
         EventBus.on('deleteComponent', (data: {x: number, y: number, obj: string, id: number}) => { 
             this.deleteComponentFromMenu(data); 
         });
-        
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
         EventBus.on('sliderChange', (value: number) => {
             // Map the slider value (0-100) to the zoom range (0.6-2)
@@ -44,35 +43,62 @@ export class canva extends Scene
             this.cameras.main.setZoom(this._zoom);
         });
 
-        // Delete component on key press
-        /*this.input.keyboard?.on('keydown-BACKSPACE', () => {
+        EventBus.on('displayComponentProperties', (data: {id: number, type: string}) => {
 
-            EventBus.emit('showAlertDialog');
+            switch(data.type){
+                case 'Pc':
+                    this.pc.forEach(pc => {
+                        if(pc.identifier === data.id){
+                            pc.showPcProperties();
+                            return;
+                        }
+                    });
+                    break;
+                case 'Switch':
+                    this.switches.forEach(switch_ => {
+                        if(switch_.identifier === data.id){
+                            switch_.showSwitchProperties();
+                            EventBus.emit('vlans', this.vlans);
+                            return;
+                        }
+                    });
+                    break;
+                case 'Router':
+                    this.routers.forEach(router => {
+                        if(router.identifier === data.id){
+                            //case to work
+                            return;
+                        }
+                    });
+                    break;
+                default:
+                    break;
+            }
+        });
 
-            const x = this.input.activePointer.worldX;
-            const y = this.input.activePointer.worldY;
-
-            EventBus.on('confirmDeletion', () => {
-                this.pc.forEach(pc => {
-                    if (pc.image.getBounds().contains(x, y)) {
-                        console.log('delete pc');
-                        this.removeComponent(pc);
-                    }
-                });
-                this.switches.forEach(switch_ => {
-                    if (switch_.image.getBounds().contains(x, y)) {
-                        this.removeComponent(switch_);
-                    }
-                });
-                this.routers.forEach(router => {
-                    if (router.image.getBounds().contains(x, y)) {
-                        this.removeComponent(router);
-                    }
-                });
+        EventBus.on('savePcData', (data: {ip: string, mask: string, red: string,  gateway: string, identifier: string, type: string}) => {
+            this.pc.forEach(pc => {
+                if(pc.identifier === parseInt(data.identifier)){
+                    pc.updateProperties(data);
+                    return;
+                }
             });
-        });*/
+        });
 
-        //this.createPortDomElement();
+        EventBus.on('saveSwitchData', (data: {ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[], identifier: string}) => {
+            this.switches.forEach(switch_ => {
+                if(switch_.identifier === parseInt(data.identifier)){
+                    console.log('i found you bitch', switch_);
+                    switch_.updateProperties(data);
+                    return;
+                }
+            });
+        });
+
+        EventBus.on('updateVlans' ,(vlans: string[]) => {
+            this.vlans = vlans;
+        });
+
     }
 
     /******************************************************************
