@@ -1,9 +1,6 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
 import { Pc, Switch, Cable, Router} from '../components/netComponents';
-import { off } from 'process';
-import { start } from 'repl';
-import { ComponentNoneIcon } from '@radix-ui/react-icons';
 
 export class canva extends Scene
 {   
