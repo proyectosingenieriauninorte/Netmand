@@ -131,6 +131,8 @@ export class Pc extends ImageManager {
     scene: Scene;
     x: number;
     y: number;
+    textx: number;
+    texty: number;
     identifier: number;
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text;
@@ -248,6 +250,8 @@ export class Switch extends ImageManager {
     identifier: number;
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
+    message: string = '';
+    hostname: string = '';  
     ports: {object: Pc | Router | null, 
         vlan: string, 
         speed: string, 
@@ -276,14 +280,19 @@ export class Switch extends ImageManager {
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
     }
 
-    public updateProperties(data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]}) {
+    public updateProperties(data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]
+    , message: string, hostname: string}) {
         this.ports = data.ports;
+        this.message = data.message;
+        this.hostname = data.hostname;
     }
 
     public showSwitchProperties() {
         EventBus.emit('showSwitchProperties', {
             ports: this.ports,
-            identifier: this.identifier
+            identifier: this.identifier,
+            message: this.message,
+            hostname: this.hostname,
         });
     }
 
@@ -373,7 +382,16 @@ export class Router extends ImageManager {
     identifier: number;
     image: Phaser.GameObjects.Image;
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
-    ports: (Router | Switch | null)[];
+    message: string = '';
+    hostname: string = '';  
+    rip: string = '';
+    ports: {object: Switch| Router | null, 
+        speed: string, 
+        duplex: string,
+        description: string,
+        status: string,
+        net: string,
+        dot1q: {vlan: string, ip: string, mask: string}[]}[];
     targetPort: number = 0;
 
     constructor(scene: Scene, identifier: number, image: Phaser.GameObjects.Image) {
@@ -382,10 +400,35 @@ export class Router extends ImageManager {
         this.identifier = identifier;
         this.image = image;
         this.addText();
-        this.ports = new Array(4).fill(null);
+        this.ports = new Array(4).fill(null).map(() => ({ object: null,
+            speed: '',
+            duplex: '',
+            description: '',
+            status: '',
+            net: '',
+            dot1q: []
+        }));
 
         window.addEventListener('mousemove', this.updateTextPosition.bind(this));
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
+    }
+
+    public updateProperties(data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; dot1q: {vlan: string, ip: string, mask: string}[]}[], 
+        message: string, hostname: string, rip: string}) {
+        this.ports = data.ports;
+        this.message = data.message;
+        this.hostname = data.hostname;
+        this.rip = data.rip;
+    }
+
+    public showRouterProperties() {
+        EventBus.emit('showRouterProperties', {
+            ports: this.ports,
+            identifier: this.identifier,
+            message: this.message,
+            hostname: this.hostname,
+            rip: this.rip
+        });
     }
 
     private addText() {
@@ -404,28 +447,6 @@ export class Router extends ImageManager {
             this.text.y = y;
             this.scene.children.bringToTop(this.text);
         }
-    }
-
-    // Method to connect an object to a port
-    public connectToPort(portIndex: number, object: Router | Switch) {
-        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            this.ports[portIndex] = object;
-        }
-    }
-
-    // Method to disconnect an object from a port
-    public disconnectFromPort(portIndex: number) {
-        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            this.ports[portIndex] = null;
-        }
-    }
-
-    // Method to get the object connected to a port
-    public getObjectConnectedToPort(portIndex: number): Router | Switch | null {
-        if (portIndex >= 0 && portIndex < 24) { // Ensure portIndex is within bounds
-            return this.ports[portIndex];
-        }
-        return null;
     }
 
     private displaySettingsMenu(pointer: Phaser.Input.Pointer) {
@@ -479,9 +500,11 @@ export class Cable {
     endCoordinates: { x: number, y: number } = { x: 0, y: 0 };
     endComponent: Pc | Switch | Router  | null = null;
     identifier: number;
+    isSomethingBeingAdded: boolean = false;
+    selected: boolean = false;
     private line: Phaser.GameObjects.Graphics;
     private interactiveArea: Phaser.GameObjects.Zone;
-    private selected: boolean = false;
+    
     
 
     constructor(scene: Phaser.Scene, identifier:number, startCoordinates: { x: number, y: number }) {
@@ -494,10 +517,16 @@ export class Cable {
         this.draw();
 
         this.interactiveArea.setInteractive({ useHandCursor: true });
-        this.interactiveArea.on('pointerdown', this.onSelect, this);
+        this.scene.input.on('pointerdown', this.onSelect, this);
         window.addEventListener('mousemove', this.update.bind(this));
-        this.scene.input.on('pointerdown', this.onCanvasClick, this);
+        window.addEventListener('keydown', this.handleKeyDown.bind(this));
 
+    }
+
+    private handleKeyDown(event: KeyboardEvent): void {
+        if (this.selected && event.key === 'Backspace') {
+            EventBus.emit('showAlertDialog');
+        }
     }
 
     private draw(): void {
@@ -519,31 +548,34 @@ export class Cable {
         this.interactiveArea.setRotation(angle);
     }
 
-    private onSelect(event: KeyboardEvent): void {
-        //check if the current pointer x and y is within the bounds of the interactive area
-        this.selected = !this.selected;
+    private onSelect(event: Phaser.Input.Pointer): void {
+        if(!this.isSomethingBeingAdded) {
+            // Check if the mouse pointer intersects with the cable line
+            const line = new Phaser.Geom.Line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
+            
+            const worldPoints = this.scene.input.activePointer.positionToCamera(this.scene.cameras.main) as Phaser.Math.Vector2;
+
+            // Define the polygonal area around the line
+            const offset = 10; // Adjust as needed
+            const perpVec = new Phaser.Math.Vector2(line.y2 - line.y1, line.x1 - line.x2).normalize().scale(offset);
+            const p1 = new Phaser.Math.Vector2(line.x1, line.y1).add(perpVec);
+            const p2 = new Phaser.Math.Vector2(line.x2, line.y2).add(perpVec);
+            const p3 = new Phaser.Math.Vector2(line.x2, line.y2).subtract(perpVec);
+            const p4 = new Phaser.Math.Vector2(line.x1, line.y1).subtract(perpVec);
+
+            const hitArea = new Phaser.Geom.Polygon([p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y]);
+
+            if(hitArea.contains(worldPoints.x, worldPoints.y)) {
+                this.selected = true;
+            }else{
+                this.selected = false;
+            }
+        }else{
+            this.selected = false;
+        }
         this.draw();
     }
 
-    private onCanvasClick(event: Phaser.Input.Pointer): void {
-        // Check if the click is outside the line and deselect it
-        const isOutsideLine = this.isPointOutsideLine(event.worldX, event.worldY);
-        console.log(isOutsideLine);
-        if (isOutsideLine) {
-            this.selected = false;
-            this.draw();
-        }
-    }
-
-    private isPointOutsideLine(x: number, y: number): boolean {
-        const { x: startX, y: startY } = this.startCoordinates;
-        const { x: endX, y: endY } = this.endCoordinates;
-        const distanceFromStart = Phaser.Math.Distance.Between(startX, startY, x, y);
-        const distanceFromEnd = Phaser.Math.Distance.Between(endX, endY, x, y);
-        const lineLength = Phaser.Math.Distance.Between(startX, startY, endX, endY);
-        console.log(distanceFromStart, distanceFromEnd, lineLength);
-        return distanceFromStart > 10 || distanceFromEnd > 10;
-    }
     public update(): void {
         if (this.startComponent) {
             const { x: startX, y: startY } = this.startComponent.image; // Assuming components have an `image` property

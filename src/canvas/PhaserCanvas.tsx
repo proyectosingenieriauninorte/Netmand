@@ -8,7 +8,8 @@ import PcPortMenu from './primitives/contextMenu/pcPortsMenu';
 import SwitchPortMenu from './primitives/contextMenu/switchPortsMenu';
 import RouterPortMenu from './primitives/contextMenu/routerPortsMenu';
 import PcProperties from './primitives/componentProperties/pcMenuProp';
-import SwitchProperties from './primitives/componentProperties/switch/switchMenuProp';
+import SwitchProperties from './primitives/componentProperties/switch & router/switchMenuProp';
+import RouterProperties from './primitives/componentProperties/switch & router/routerMenuProp';
 import ToolbarDemo from './primitives/toolbar/toolbar';
 import { SheetSide } from './primitives/sheet/sheet';
 
@@ -128,6 +129,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 {<RouterPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterPortMenu */}
                 {<PcProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render PcProperties */}
                 {<SwitchProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchProperties */}
+                {<RouterProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterProperties */}
                 {<ToolbarDemo style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render ToolbarDemo */}
                 {<SheetSide style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SheetSide */}
             </div>

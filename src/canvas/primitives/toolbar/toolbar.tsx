@@ -27,10 +27,6 @@ const cableClicked = () => {
   EventBus.emit('addCable');
 }
 
-const showCommands = () => {
-  EventBus.emit('showCommands');
-}
-
 const ToolbarDemo: FC<ToolbarDemoProps> = forwardRef((_, ref) => {
 
   useEffect(() => {
@@ -110,6 +106,7 @@ const PopoverDemo: FC = () => {
   const handleDeleteVlan = (index: number) => {
     setVlans((prevVlans) => {
       const updatedVlans = prevVlans.filter((_, i) => i !== index);
+      EventBus.emit('updateVlans', updatedVlans);
 
       EventBus.emit('showAlert', 'vlan deleted successfully!');
       setTimeout(() => {

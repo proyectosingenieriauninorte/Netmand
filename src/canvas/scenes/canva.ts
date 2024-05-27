@@ -66,7 +66,8 @@ export class canva extends Scene
                 case 'Router':
                     this.routers.forEach(router => {
                         if(router.identifier === data.id){
-                            //case to work
+                            router.showRouterProperties();
+                            EventBus.emit('vlans', this.vlans);
                             return;
                         }
                     });
@@ -85,10 +86,10 @@ export class canva extends Scene
             });
         });
 
-        EventBus.on('saveSwitchData', (data: {ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[], identifier: string}) => {
+        EventBus.on('saveSwitchData', (data: {ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[], identifier: string
+                    ,message: string, hostname: string}) => {
             this.switches.forEach(switch_ => {
                 if(switch_.identifier === parseInt(data.identifier)){
-                    console.log('i found you bitch', switch_);
                     switch_.updateProperties(data);
                     return;
                 }
@@ -99,6 +100,32 @@ export class canva extends Scene
             this.vlans = vlans;
         });
 
+        EventBus.on('saveRouterData', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], 
+            identifier: string; message: string; hostname: string; rip: string;}) =>{
+                this.routers.forEach(router =>{
+                    if(router.identifier === parseInt(data.identifier)){
+                        router.updateProperties(data)
+                        return;
+                    }         
+                });
+        });
+        
+        this.input.on('wheel', (pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) => {
+            if (pointer.event.ctrlKey) {
+                this.zoom(pointer, gameObjects, deltaX, deltaY);
+            }
+        });
+
+        // Event listener for deleting a cable
+        EventBus.on('confirmDeletion', () => {
+            this.cables.forEach(cable => {
+                console.log('cable', cable);
+                if(cable.selected){
+                    this.removeCable(cable.startComponent);
+                    return;
+                }
+            });
+        });
     }
 
     /******************************************************************
@@ -194,13 +221,13 @@ export class canva extends Scene
         });
     }
 
-    private removeCable(component: Pc | Switch | Router) {
+    private removeCable(component: Pc | Switch | Router | null) {
         const cablesToRemove = this.cables.filter(cable => 
             cable.startComponent === component || cable.endComponent === component
         );
     
         cablesToRemove.forEach(cable => {
-            console.log('executing')
+            console.log('executing');
             const startComponent = cable.startComponent;
             const endComponent = cable.endComponent;
     
@@ -250,8 +277,8 @@ export class canva extends Scene
             }
             if(endComponent instanceof Router){
                 endComponent.ports.forEach((port, index)  => {
-                    if(port === startComponent){
-                        endComponent.ports[index] = null;
+                    if(port.object === startComponent){
+                        endComponent.ports[index].object = null;
                         return;
                     }
                 });
@@ -268,8 +295,8 @@ export class canva extends Scene
             }
             if(endComponent instanceof Router){
                 endComponent.ports.forEach((port, index) => {
-                    if(port === startComponent){
-                        endComponent.ports[index] = null;
+                    if(port.object === startComponent){
+                        endComponent.ports[index].object = null;
                     }
                 });
             }
@@ -294,9 +321,10 @@ export class canva extends Scene
         this._zoom = Phaser.Math.Clamp(newZoom, 0.6, 2);
         this.cameras.main.setZoom(this._zoom);
 
-        EventBus.emit('updateZoom', this._zoom);
-
-        console.log(this.switches[0])
+        // Calculate the proportional slider value
+        const sliderValue = Phaser.Math.Linear(0, 100, (this._zoom - 0.6) / (2 - 0.6));
+        
+        EventBus.emit('updateSlider', sliderValue);
     }
 
     /******************************************************************
@@ -321,13 +349,13 @@ export class canva extends Scene
             }
         };
 
+        this.makeComponentsUndraggable();
+
         const handleCableCreation = (pointer: Phaser.Input.Pointer) => {
 
             const component = this.getComponentUnderPointer(pointer);
 
             if(component){
-                
-                this.makeComponentsUndraggable();
 
                 if(!this.cableInProgress){// Start cable creation
                     if(this.checkPortsAvailability(component) === false){ // check if the component has an available port
@@ -339,11 +367,13 @@ export class canva extends Scene
                                 this.cableInProgress.setStartComponent(component);
                                 this.cableInProgress.updateStartCoordinates({ x: component.image.x, y: component.image.y });
                                 this.cableInProgress.updateEndCoordinates({ x: component.image.x, y: component.image.y });
+                                this.cableInProgress.isSomethingBeingAdded = true;
                                 return; // Prevent multiple cables from being created
                             }
                             this.cableInProgress = new Cable(this, this.cables.length, { x: component.image.x, y: component.image.y });
                             this.cableInProgress.setStartComponent(component);
                             this.cableInProgress.updateEndCoordinates({ x: component.image.x, y: component.image.y });
+                            this.cableInProgress.isSomethingBeingAdded = true;
                             component.targetPort = key;
                             EventBus.emit('showAlert', message);
                         });
@@ -420,6 +450,9 @@ export class canva extends Scene
         this.routers.forEach(router => {
             router.image.disableInteractive();
         });
+        this.cables.forEach(cable => {
+            cable.isSomethingBeingAdded = true;
+        });
     }
 
     private makeComponentsDraggable() {
@@ -431,6 +464,9 @@ export class canva extends Scene
         });
         this.routers.forEach(router => {
             router.image.setInteractive({ draggable: true, useHandCursor: true });
+        });
+        this.cables.forEach(cable => {
+            cable.isSomethingBeingAdded = false;
         });
     }
             
@@ -458,7 +494,7 @@ export class canva extends Scene
             return component.ports.some(port => port.object === null);
         }
         if (component instanceof Router) {
-            return component.ports.some(port => port === null);
+            return component.ports.some(port => port.object === null);
         }
     }
 
@@ -479,16 +515,16 @@ export class canva extends Scene
                 }
                 if(endComponent instanceof Router){
                     startComponent.ports[startComponent.targetPort].object = endComponent;
-                    endComponent.ports[endComponent.targetPort] = startComponent;
+                    endComponent.ports[endComponent.targetPort].object = startComponent;
                 }
             } else if (startComponent instanceof Router) {
                 if(endComponent instanceof Switch){
-                    startComponent.ports[startComponent.targetPort] = endComponent;
+                    startComponent.ports[startComponent.targetPort].object = endComponent;
                     endComponent.ports[endComponent.targetPort].object = startComponent;
                 }
                 if(endComponent instanceof Router){
-                    startComponent.ports[startComponent.targetPort] = endComponent;
-                    endComponent.ports[endComponent.targetPort] = startComponent;
+                    startComponent.ports[startComponent.targetPort].object = endComponent;
+                    endComponent.ports[endComponent.targetPort].object = startComponent;
                 }
             }
         }
@@ -558,6 +594,7 @@ export class canva extends Scene
                     this.input.off('pointermove', handlePointerMove);
                     this.input.off('pointerdown', handlePointerDown);
                     this.input.keyboard?.off('keydown-ESC', handleEscape);
+                    this.buildJson();
                 }
             };
     
@@ -584,6 +621,104 @@ export class canva extends Scene
                         ** Overlay Div Properties **
 
     ********************************************************************/
+
+    private buildJson(){
+        const pcs = this.pc.map(pc => ({
+            x: pc.image.x, // x coordinate
+            y: pc.image.y, // y coordinate
+            textx: pc.text.x, // x coordinate of the text
+            texty: pc.text.y, // y coordinate of the text
+            identifier: pc.identifier, // identifier
+            text: pc.text.text, // text
+            ports: {
+                object_id: pc.ports[0]?.identifier, 
+                type: pc.ports[0] ? pc.ports[0].constructor.name : null}, // object_id and type
+            mask: pc.mask, // mask
+            ip: pc.ip, // ip
+            gateway: pc.gateway // gateway
+        }));
+
+        const switches = this.switches.map(switch_ => ({
+            x: switch_.image.x, // x coordinate
+            y: switch_.image.y, // y coordinate
+            textx: switch_.text.x, // x coordinate of the text
+            texty: switch_.text.y, // y coordinate of the text
+            identifier: switch_.identifier, // identifier
+            text: switch_.text.text, 
+            ports: switch_.ports.map((port, index) => ({
+                object_id: port.object ? port.object.identifier : null, 
+                type: port.object ? port.object.constructor.name : null,
+                speed: port.speed,
+                duplex: port.duplex,
+                description: port.description,
+                status: port.status,
+                mode: port.mode,
+                vlan: {
+                    "name": "",
+                    "id": port.vlan
+                },
+                name: `FastEthernet0/${index+1}`
+                })),
+            hostname: switch_.hostname,
+            message: switch_.message
+        }));
+
+        const routers = this.routers.map(router => ({
+            x: router.image.x, // x coordinate
+            y: router.image.y, // y coordinate
+            textx: router.text.x, // x coordinate of the text
+            texty: router.text.y, // y coordinate of the text
+            identifier: router.identifier, // identifier
+            text: router.text.text, 
+            ports: router.ports.map((port, index) => ({
+                object_id: port.object ? port.object.identifier : null, 
+                type: port.object ? port.object.constructor.name : null,
+                speed: port.speed,
+                duplex: port.duplex,
+                description: port.description,
+                status: port.status,
+                net: port.net,
+                dot1q: port.dot1q.map(dot1q => ({
+                    vlan: {
+                        "name": "",
+                        "id": dot1q.vlan
+                    },
+                    ip: dot1q.ip,
+                    mask: dot1q.mask
+                })),
+                name: `FastEthernet0/${index+1}`
+            })),
+            hostname: router.hostname,
+            message: router.message,
+            rip: router.rip
+        }));
+
+        const cables = this.cables.map(cable => ({
+            x: cable.startCoordinates.x, // x coordinate
+            y: cable.startCoordinates.y, // y coordinate
+            x1: cable.endCoordinates.x, // x coordinate
+            y1: cable.endCoordinates.y, // y coordinate
+            startComponent: {
+                type: cable.startComponent ? cable.startComponent.constructor.name : null,
+                object_id: cable.startComponent ? cable.startComponent.identifier : null
+            }, // identifier
+            endComponent:{
+                type: cable.endComponent ? cable.endComponent.constructor.name : null,
+                object_id: cable.endComponent ? cable.endComponent.identifier : null
+            }, // identifier
+            identifier: cable.identifier // identifier
+        }));
+
+        const json = {
+            pcs,
+            switches,
+            routers,
+            cables,
+            vlans: this.vlans
+        };
+
+        console.log('json', json);
+    }
 }
 
 

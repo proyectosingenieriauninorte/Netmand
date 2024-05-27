@@ -61,13 +61,13 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
                 <Dialog.Portal>
                     <Dialog.Overlay className="DialogOverlay" />
                     <Dialog.Content className="DialogContent">
-                        <Dialog.Title className="DialogTitle">PROPIEDADES DE PC {pcProps.identifier}</Dialog.Title>
+                        <Dialog.Title className="DialogTitle">PC {pcProps.identifier} PROPERTIES</Dialog.Title>
                         <Dialog.Description className="DialogDescription">
-                            Realiza los cambios que deseas en los recuadros de texto.
+                        Make the desired changes in the text boxes.
                         </Dialog.Description>
 
                         <fieldset className="Fieldset">
-                            <label className="Label" htmlFor="ip">Dirección IP</label>
+                            <label className="Label" htmlFor="ip">IP</label>
                             <input
                                 className="Input"
                                 id="ip"
@@ -77,7 +77,7 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
                         </fieldset>
 
                         <fieldset className="Fieldset">
-                            <label className="Label" htmlFor="mask">Máscara</label>
+                            <label className="Label" htmlFor="mask">Mask</label>
                             <input
                                 className="Input"
                                 id="mask"

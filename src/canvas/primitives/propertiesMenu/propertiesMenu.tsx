@@ -99,7 +99,7 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
             </ContextMenu.Item>
             <ContextMenu.Item className="ContextMenuItem" onClick={handleCommands}>
               <ChevronsRightLeft className="mr-2 h-4 w-4" />
-              Comandos <div className="RightSlot"></div>
+              Commands <div className="RightSlot"></div>
             </ContextMenu.Item>
 
             <ContextMenu.Separator className="ContextMenuSeparator" />

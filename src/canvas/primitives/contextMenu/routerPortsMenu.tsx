@@ -133,7 +133,7 @@ const RouterPortMenu: FC<RouterPortMenuProps> = ({ style }) => {
         <ContextMenu.Portal>
           <ContextMenu.Content className="ContextMenuContent">
             {menuCoordinates.ports.map((port, index) => (
-              port === null && (
+              port.object === null && (
                 <ContextMenu.Item key={index} className="ContextMenuItem" onClick={selectedPort(index)}>
                   <DotFilledIcon className="mr-2 h-4 w-4" />
                   FastEthernet <div className="RightSlot">0/{index + 1}</div>

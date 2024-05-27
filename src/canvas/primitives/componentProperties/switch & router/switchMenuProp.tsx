@@ -6,16 +6,18 @@ import { EventBus } from '@/canvas/EventBus';
 import { Pc, Router } from '@/canvas/components/netComponents';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
 
-interface PcPortMenuProps {
+interface SwitchPropertiesProps {
   style?: React.CSSProperties;
 }
 
-const SwitchProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
+const SwitchProperties: FC<SwitchPropertiesProps> = forwardRef((_, ref) => {
   const [open, setOpen] = useState(false);
   const [currentInterface, setCurrentInterface] = useState<number | null>(null);
   const [switchProps, setSwitchProps] = useState<{
     ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[];
     identifier: string;
+    message: string;
+    hostname: string;
   }>({
     ports: Array.from({ length: 24 }).map(() => ({
       object: null,
@@ -27,6 +29,8 @@ const SwitchProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
       mode: '',
     })),
     identifier: '',
+    message: '',
+    hostname: '',
   });
 
   const [vlans, setVlans] = useState<string[]>([]);
@@ -41,15 +45,19 @@ const SwitchProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
       setCurrentInterface(0); // Set the current interface to the first one when opening the dialog
     };
 
-    EventBus.on('showSwitchProperties', (data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]; identifier: number }) => {
+    EventBus.on('showSwitchProperties', (data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]; identifier: number, 
+    message: string, hostname: string}) => {
       setSwitchProps({
         ports: data.ports,
         identifier: data.identifier.toString(),
+        message: data.message,
+        hostname: data.hostname,
       });
-      setSelectedMode(data.ports[0]?.mode || ''); // Set the selected mode to the mode of the first port
+      setSelectedMode(data.ports[0]?.mode || '');
       showDialog();
     });
 
+    //receive vlans on canvas (scenes)
     EventBus.on('vlans', (vlans: string[]) => {
       setVlans(vlans);
     });
@@ -118,15 +126,14 @@ const SwitchProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
         </label>
         <label id='label'>
           Description:
-          <input type="text" value={port.description} onChange={(e) => handleInputChange(index, 'description', e.target.value)} />
+          <input id='description' type="text" value={port.description} onChange={(e) => handleInputChange(index, 'description', e.target.value)} />
         </label>
         <label id='label'>
           Status:
           <select value={port.status} onChange={(e) => handleInputChange(index, 'status', e.target.value)}>
             <option value="">Select Status</option>
-            <option value="auto">Auto</option>
-            <option value="half">Half</option>
-            <option value="full">Full</option>
+            <option value="auto">On</option>
+            <option value="half">Off</option>
           </select>
         </label>
       </div>
@@ -150,10 +157,24 @@ const SwitchProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
         <Dialog.Portal>
           <Dialog.Overlay className="DialogOverlay" />
           <Dialog.Content className="DialogContent">
-            <Dialog.Title className="DialogTitle">PROPIEDADES DE SWITCH {switchProps.identifier}</Dialog.Title>
+            <Dialog.Title className="DialogTitle">SWITCH {switchProps.identifier} PROPERTIES</Dialog.Title>
             <Dialog.Description className="DialogDescription">
-              Selecciona una interfaz para editar sus propiedades.
+            Select an interface to edit its properties..
             </Dialog.Description>
+
+            <div className='mb-2 text-xs color text-black	flex'>
+              <div className='content-center mr-2'>
+                hostname
+              </div>
+              <input id='hostname' type="text" placeholder={switchProps.hostname} onChange={(e) => switchProps.hostname = e.target.value}/>
+            </div>
+
+            <div className='mb-2 text-xs color text-black	flex'>
+              <div className='content-center mr-3'>
+                message 
+              </div>
+              <input id='message' type="text" placeholder={switchProps.message} onChange={(e) => switchProps.message = e.target.value}/>
+            </div>
 
             <div className='flex'>
               <div ref={scrollAreaRef}>
