@@ -17,7 +17,7 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
     }
   };
 
-  const [menuCoordinates, setMenuCoordinates] = useState<{
+  const [componentProps, setComponentProps] = useState<{
     x: number;
     y: number;
     width: number;
@@ -50,7 +50,7 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
         menu.style.height = `${data.height}px`; 
         menu.style.display = 'block';
       }
-      setMenuCoordinates(data);
+      setComponentProps(data);
     };
 
     EventBus.on('showPropertiesMenu', showMenu);
@@ -71,20 +71,20 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
         }
       });
     };
-  }, [menuCoordinates]);
+  }, [componentProps]);
 
   const handleDelete = () => {
-    EventBus.emit('deleteComponent', {x: menuCoordinates.x, y: menuCoordinates.y, obj: menuCoordinates.type, id: menuCoordinates.id});
+    EventBus.emit('deleteComponent', {x: componentProps.x, y: componentProps.y, obj: componentProps.type, id: componentProps.id});
     hideMenu();
   };
 
   const handleSettings = () => {
-    console.log(menuCoordinates);
-    EventBus.emit('displayComponentProperties', {id: menuCoordinates.id, type: menuCoordinates.type});
+    console.log(componentProps);
+    EventBus.emit('displayComponentProperties', {id: componentProps.id, type: componentProps.type});
   }
 
   const handleCommands = () => {
-    EventBus.emit('showCommands', menuCoordinates.id);
+    EventBus.emit('showCommands', {id: componentProps.id, type: componentProps.type});
   }
 
   return (
@@ -98,7 +98,7 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
               Settings <div className="RightSlot"></div>
             </ContextMenu.Item>
             <ContextMenu.Item className="ContextMenuItem" onClick={handleCommands}>
-              <ChevronsRightLeft className="mr-2 h-4 w-4" />
+            <ChevronsRightLeft className="mr-2 h-4 w-4" />
               Commands <div className="RightSlot"></div>
             </ContextMenu.Item>
 

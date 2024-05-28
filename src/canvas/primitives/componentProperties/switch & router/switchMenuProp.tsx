@@ -149,6 +149,7 @@ const SwitchProperties: FC<SwitchPropertiesProps> = forwardRef((_, ref) => {
     setTimeout(() => {
       EventBus.emit('hideAlert');
     }, 3000);
+    EventBus.emit('updateCommands');
   };
 
   return (

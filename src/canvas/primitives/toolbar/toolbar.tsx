@@ -89,33 +89,52 @@ const PopoverDemo: FC = () => {
   const [newVlan, setNewVlan] = useState<string>('');
 
   const handleAddVlan = () => {
-    if (newVlan.trim() !== '') {
-      setVlans((prevVlans) => {
-        const updatedVlans = [...prevVlans, newVlan];
-        EventBus.emit('updateVlans', updatedVlans);
-        EventBus.emit('showAlert', 'vlan added successfully!');
+    if (/^\d+$/.test(newVlan)) {
+      const vlanNumber = parseInt(newVlan, 10);
+      if (!isNaN(vlanNumber) && vlanNumber >= 1 && vlanNumber <= 4094) {
+        if (!vlans.includes(newVlan)) {
+          const updatedVlans = [...vlans, newVlan];
+          setVlans(updatedVlans);
+          setNewVlan('');
+
+          // Emitir eventos después de actualizar el estado
+          EventBus.emit('updateVlans', updatedVlans);
+          EventBus.emit('showAlert', 'VLAN added successfully!');
+          setTimeout(() => {
+            EventBus.emit('hideAlert');
+          }, 3000);
+        } else {
+          EventBus.emit('showAlert', 'VLAN already exists. Please enter a unique VLAN.');
+          setTimeout(() => {
+            EventBus.emit('hideAlert');
+          }, 3000);
+        }
+      } else {
+        EventBus.emit('showAlert', 'Invalid VLAN. Please enter a number between 1 and 4094.');
         setTimeout(() => {
           EventBus.emit('hideAlert');
         }, 3000);
-        return updatedVlans;
-      });
-      setNewVlan('');
-    }
-  };
-
-  const handleDeleteVlan = (index: number) => {
-    setVlans((prevVlans) => {
-      const updatedVlans = prevVlans.filter((_, i) => i !== index);
-      EventBus.emit('updateVlans', updatedVlans);
-
-      EventBus.emit('showAlert', 'vlan deleted successfully!');
+      }
+    } else {
+      EventBus.emit('showAlert', 'Invalid VLAN. Please enter a number.');
       setTimeout(() => {
         EventBus.emit('hideAlert');
       }, 3000);
-      
-      return updatedVlans;
-    });
+    }
+  };   
+
+  const handleDeleteVlan = (index: number) => {
+    const updatedVlans = vlans.filter((_, i) => i !== index);
+    setVlans(updatedVlans);
+
+    // Emitir eventos después de actualizar el estado
+    EventBus.emit('updateVlans', updatedVlans);
+    EventBus.emit('showAlert', 'vlan deleted successfully!');
+    setTimeout(() => {
+      EventBus.emit('hideAlert');
+    }, 3000);
   };
+
   return (
     <Popover.Root>
       <Popover.Trigger asChild>

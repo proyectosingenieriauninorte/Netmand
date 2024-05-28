@@ -21,6 +21,11 @@ export class ImageManager{
         document.addEventListener('pointerdown', this.hideClickBox.bind(this));
     }
 
+    public destroyDragbox() {
+        this.dragBox.destroy();
+        this.clickbox.destroy();
+    }
+
     private createDragBox() {
         this.dragBox = this.scene.add.graphics();
         this.clickbox = this.scene.add.graphics();
@@ -391,6 +396,8 @@ export class Router extends ImageManager {
         description: string,
         status: string,
         net: string,
+        interface_ip: string,
+        interface_mask: string,
         dot1q: {vlan: string, ip: string, mask: string}[]}[];
     targetPort: number = 0;
 
@@ -406,6 +413,8 @@ export class Router extends ImageManager {
             description: '',
             status: '',
             net: '',
+            interface_ip: '',
+            interface_mask: '',
             dot1q: []
         }));
 
@@ -413,7 +422,7 @@ export class Router extends ImageManager {
         this.image.on('pointerdown', this.displaySettingsMenu.bind(this));
     }
 
-    public updateProperties(data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; dot1q: {vlan: string, ip: string, mask: string}[]}[], 
+    public updateProperties(data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: {vlan: string, ip: string, mask: string}[]}[], 
         message: string, hostname: string, rip: string}) {
         this.ports = data.ports;
         this.message = data.message;
@@ -441,7 +450,7 @@ export class Router extends ImageManager {
 
     private updateTextPosition() {
         const x = this.image.x;
-        const y = this.image.y + this.image.height / 2;
+        const y = this.image.y + this.image.height / 2 - 35;
         if (this.text.x !== x || this.text.y !== y) {
             this.text.x = x;
             this.text.y = y;

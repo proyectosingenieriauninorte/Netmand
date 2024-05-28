@@ -97,3 +97,22 @@
   background-color: var(--violet-10);
   color: white;
 }
+
+.terminal {
+  background-color: black;
+  color: lime;
+  padding: 10px;
+  font-family: monospace;
+  border-radius: 5px;
+  width: 100%;
+  overflow-y: auto;
+  max-height: calc(90vh - 80px); /* Set max height to 80% of viewport height */
+}
+
+.terminal-command-set {
+  margin-bottom: 20px;
+}
+
+.terminal-line {
+  margin: 0;
+}

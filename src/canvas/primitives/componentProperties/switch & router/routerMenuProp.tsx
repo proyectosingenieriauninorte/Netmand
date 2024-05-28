@@ -14,7 +14,7 @@ const RouterProperties: FC<RouterProps> = forwardRef((_, ref) => {
   const [open, setOpen] = useState(false);
   const [currentInterface, setCurrentInterface] = useState<number | null>(null);
   const [routerProps, setRouterProps] = useState<{
-    ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; dot1q: { vlan: string; ip: string; mask: string }[] }[];
+    ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: { vlan: string; ip: string; mask: string }[] }[];
     identifier: string;
     message: string;
     hostname: string;
@@ -27,6 +27,8 @@ const RouterProperties: FC<RouterProps> = forwardRef((_, ref) => {
       description: '',
       status: '',
       net: '',
+      interface_ip: '',
+      interface_mask: '',
       dot1q: [{ vlan: '', ip: '', mask: '' }],
     })),
     identifier: '',
@@ -47,7 +49,7 @@ const RouterProperties: FC<RouterProps> = forwardRef((_, ref) => {
       setCurrentInterface(0); // Set the current interface to the first one when opening the dialog
     };
 
-    EventBus.on('showRouterProperties', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], identifier: number; message: string; hostname: string; rip: string;}) => {
+    EventBus.on('showRouterProperties', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], identifier: number; message: string; hostname: string; rip: string;}) => {
       setRouterProps({
         ports: data.ports,
         identifier: data.identifier.toString(),
@@ -148,6 +150,14 @@ const RouterProperties: FC<RouterProps> = forwardRef((_, ref) => {
       <div ref={formRef} key={index} className="PortForm overflow-y-auto">
         <h3>Interface {index + 1} Properties</h3>
         <label id='label'>
+          Dirección Ip:
+          <input id='description' type="text" value={port.interface_ip} onChange={(e) => handleInputChange(index, 'interface_ip', e.target.value)} />
+        </label>
+        <label id='label'>
+          Máscara:
+          <input id='description' type="text" value={port.interface_mask} onChange={(e) => handleInputChange(index, 'interface_mask', e.target.value)} />
+        </label>
+        <label id='label'>
           Speed:
           <select value={port.speed} onChange={(e) => handleInputChange(index, 'speed', e.target.value)}>
             <option value="">Select Speed</option>
@@ -200,6 +210,7 @@ const RouterProperties: FC<RouterProps> = forwardRef((_, ref) => {
     setTimeout(() => {
       EventBus.emit('hideAlert');
     }, 3000);
+    EventBus.emit('updateCommands');
   };
 
   return (

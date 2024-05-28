@@ -1,6 +1,8 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
 import { Pc, Switch, Cable, Router} from '../components/netComponents';
+import axios from 'axios';
+import { NetworkData, getCommands, saveCanvas} from '@/requests/requests';
 
 export class canva extends Scene
 {   
@@ -32,6 +34,7 @@ export class canva extends Scene
         EventBus.on('deleteComponent', (data: {x: number, y: number, obj: string, id: number}) => { 
             this.deleteComponentFromMenu(data); 
         });
+        EventBus.on('buildJson',this.buildJson.bind(this));
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
         EventBus.on('sliderChange', (value: number) => {
             // Map the slider value (0-100) to the zoom range (0.6-2)
@@ -97,7 +100,7 @@ export class canva extends Scene
             this.vlans = vlans;
         });
 
-        EventBus.on('saveRouterData', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], 
+        EventBus.on('saveRouterData', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], 
             identifier: string; message: string; hostname: string; rip: string;}) =>{
                 this.routers.forEach(router =>{
                     if(router.identifier === parseInt(data.identifier)){
@@ -116,15 +119,19 @@ export class canva extends Scene
         // Event listener for deleting a cable
         EventBus.on('confirmDeletion', () => {
             this.cables.forEach(cable => {
-                console.log('cable', cable);
                 if(cable.selected){
                     this.removeCable(cable.startComponent);
                     return;
                 }
             });
         });
-    }
 
+        EventBus.on('updateCommands', () => {
+            EventBus.emit('getCommands', this.buildJson())
+        });
+
+        this.drawCanvasComponent(test_object)
+    }
     /******************************************************************
      * 
                         ** REMOVE COMPONENTS **
@@ -224,7 +231,6 @@ export class canva extends Scene
         );
     
         cablesToRemove.forEach(cable => {
-            console.log('executing');
             const startComponent = cable.startComponent;
             const endComponent = cable.endComponent;
     
@@ -245,7 +251,6 @@ export class canva extends Scene
             cable.identifier = index;
         });
 
-        console.log('cables', this.cables);
     }
 
     private updatePortsAvailability(startComponent: Pc | Switch | Router | null , endComponent: Pc | Switch | Router | null ) {
@@ -299,8 +304,6 @@ export class canva extends Scene
             }
         }
 
-        console.log('startComponent', startComponent);
-        console.log('endComponent', endComponent);
     }
 
     /******************************************************************
@@ -404,7 +407,6 @@ export class canva extends Scene
                             this.input.off('pointermove', handleCableMove);
                             this.input.off('pointerdown', handleCableCreation);
 
-                            console.log('cables', this.cables); 
                         });
                     }
                 }  
@@ -478,7 +480,6 @@ export class canva extends Scene
             (startComponent instanceof Router && endComponent instanceof Pc) ||
             (startComponent instanceof Switch && endComponent instanceof Switch) ||
             (startComponent instanceof Pc && endComponent instanceof Pc)) {
-            console.log('Invalid connection');
             return true;
         }
     }
@@ -526,8 +527,6 @@ export class canva extends Scene
             }
         }
 
-        console.log('startComponent', startComponent);
-        console.log('endComponent', endComponent);
     }
 
     /******************************************************************
@@ -540,17 +539,14 @@ export class canva extends Scene
             case 'pc':
                 const pc_ = new Pc(this, this.pc.length, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true, useHandCursor: true }));
                 this.pc.push(pc_);
-                console.log('pcs', this.pc.length);
                 return pc_;
             case 'switch':
                 const switch_ = new Switch(this, this.switches.length, this.add.image(0, 0, 'switch_component').setInteractive({ draggable: true, useHandCursor: true }));
                 this.switches.push(switch_);
-                console.log('switches', this.switches.length);
                 return switch_;
             case 'router':
                 const router_ = new Router(this, this.routers.length, this.add.image(0, 0, 'router_component').setInteractive({ draggable: true, useHandCursor: true }));
                 this.routers.push(router_);
-                console.log('routers', this.routers.length);
                 return router_;
             default:
                 return null;
@@ -591,7 +587,6 @@ export class canva extends Scene
                     this.input.off('pointermove', handlePointerMove);
                     this.input.off('pointerdown', handlePointerDown);
                     this.input.keyboard?.off('keydown-ESC', handleEscape);
-                    this.buildJson();
                 }
             };
     
@@ -603,6 +598,7 @@ export class canva extends Scene
                     this.input.off('pointermove', handlePointerMove);
                     this.input.off('pointerdown', handlePointerDown);
                     this.input.keyboard?.off('keydown-ESC', handleEscape);
+                    saveCanvas(this.buildJson());   
                     // Remove the component since the addition is aborted
                 }
             };
@@ -618,8 +614,8 @@ export class canva extends Scene
                         ** Overlay Div Properties **
 
     ********************************************************************/
-
     private buildJson(){
+
         const pcs = this.pc.map(pc => ({
             x: pc.image.x, // x coordinate
             y: pc.image.y, // y coordinate
@@ -675,6 +671,8 @@ export class canva extends Scene
                 description: port.description,
                 status: port.status,
                 net: port.net,
+                interface_ip: port.interface_ip,
+                interface_mask: port.interface_mask,
                 dot1q: port.dot1q.map(dot1q => ({
                     vlan: {
                         "name": "",
@@ -691,10 +689,8 @@ export class canva extends Scene
         }));
 
         const cables = this.cables.map(cable => ({
-            x: cable.startCoordinates.x, // x coordinate
-            y: cable.startCoordinates.y, // y coordinate
-            x1: cable.endCoordinates.x, // x coordinate
-            y1: cable.endCoordinates.y, // y coordinate
+            startCoordinates: { x: cable.startCoordinates.x, y: cable.startCoordinates.y }, // x and y coordinates
+            endCoordinates: { x: cable.endCoordinates.x, y: cable.endCoordinates.y }, // x and y coordinates
             startComponent: {
                 type: cable.startComponent ? cable.startComponent.constructor.name : null,
                 object_id: cable.startComponent ? cable.startComponent.identifier : null
@@ -705,6 +701,7 @@ export class canva extends Scene
             }, // identifier
             identifier: cable.identifier // identifier
         }));
+        
 
         const json = {
             pcs,
@@ -714,13 +711,787 @@ export class canva extends Scene
             vlans: this.vlans
         };
 
-        console.log('json', json);
+        console.log(json)
+        return json;
     }
+
+    private drawCanvasComponent(data: NetworkData) {
+
+        data.pcs.forEach(pc => {
+            const pc_ = new Pc(this, pc.identifier, this.add.image(pc.x, pc.y, 'pc_component').setInteractive({ draggable: true, useHandCursor: true }));
+            pc_.text.setPosition(pc.textx, pc.texty);
+            pc_.identifier = pc.identifier;
+            pc_.text.setText(pc.text);
+            pc_.mask = pc.mask;
+            pc_.ip = pc.ip;
+            pc_.gateway = pc.gateway;
+            pc_.destroyDragbox();
+            this.pc.push(pc_);
+        });
+
+        data.switches.forEach(switch_ => {
+            const switch__ = new Switch(this, switch_.identifier, this.add.image(switch_.x, switch_.y, 'switch_component').setInteractive({ draggable: true, useHandCursor: true }));
+            switch__.text.setPosition(switch_.textx, switch_.texty);
+            switch__.identifier = switch_.identifier;
+            switch__.text.setText(switch_.text);
+            switch__.hostname = switch_.hostname;
+            switch__.message = switch_.message;
+            switch_.ports.forEach((port, index) => {
+                switch__.ports[index].object = null;
+                switch__.ports[index].speed = port.speed;
+                switch__.ports[index].duplex = port.duplex;
+                switch__.ports[index].description = port.description;
+                switch__.ports[index].status = port.status;
+                switch__.ports[index].mode = port.mode;
+                switch__.ports[index].vlan = port.vlan.id;
+            });
+            switch__.destroyDragbox();
+            this.switches.push(switch__);
+        });
+
+        data.routers.forEach(router => {
+            const router_ = new Router(this, router.identifier, this.add.image(router.x, router.y, 'router_component').setInteractive({ draggable: true, useHandCursor: true }));
+            router_.text.setPosition(router.textx, router.texty);
+            router_.identifier = router.identifier;
+            router_.text.setText(router.text);
+            router_.hostname = router.hostname;
+            router_.message = router.message;
+            router.ports.forEach((port, index) => {
+                router_.ports[index].object = null;
+                router_.ports[index].speed = port.speed;
+                router_.ports[index].duplex = port.duplex;
+                router_.ports[index].description = port.description;
+                router_.ports[index].status = port.status;
+                router_.ports[index].net = port.net;
+                router_.ports[index].dot1q = port.dot1q.map(dot1q => ({
+                    vlan: dot1q.vlan.id,
+                    ip: dot1q.ip,
+                    mask: dot1q.mask
+                }));
+            });
+            router_.destroyDragbox();
+            this.routers.push(router_);
+        });
+
+        // Assign ports to the corresponding objects
+
+        // PC Ports (only connected to Switches)
+        this.pc.forEach(pc => {
+            data.pcs.forEach(pc_ => {
+                this.switches.forEach(switch_ => {
+                    if (pc_.ports.object_id === switch_.identifier) {
+                        pc.ports[0] = switch_;
+                    }
+                });
+            });
+        });
+
+         // Switch Ports (connected to PCs or Routers)
+        this.switches.forEach(switch_ => {
+            data.switches.forEach(switch__ => {
+                switch__.ports.forEach((port, index) => {
+                    if (port.type === 'Pc') {
+                        this.pc.forEach(pc => {
+                            if (port.object_id === pc.identifier) {
+                                switch_.ports[index].object = pc;
+                            }
+                        });
+                    } else if (port.type === 'Router') {
+                        this.routers.forEach(router => {
+                            if (port.object_id === router.identifier) {
+                                switch_.ports[index].object = router;
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+
+        // Router Ports (connected to Switches or other Routers)
+        this.routers.forEach(router => {
+            data.routers.forEach(router__ => {
+                router__.ports.forEach((port, index) => {
+                    if (port.type === 'Switch') {
+                        this.switches.forEach(switch_ => {
+                            if (port.object_id === switch_.identifier) {
+                                router.ports[index].object = switch_;
+                            }
+                        });
+                    } else if (port.type === 'Router') {
+                        this.routers.forEach(router_ => {
+                            if (port.object_id === router_.identifier) {
+                                router_.ports[index].object = router_;
+                            }
+                        });
+                    }
+                });
+            });
+        });
+
+        // Create and connect cables
+        data.cables.forEach(cableData => {
+            const startComponent = this.findComponentByIdentifierAndType(cableData.startComponent.type, cableData.startComponent.object_id);
+            const endComponent = this.findComponentByIdentifierAndType(cableData.endComponent.type, cableData.endComponent.object_id);
+            
+            if (startComponent && endComponent) {
+                const cable = new Cable(this, cableData.identifier, { x: cableData.startCoordinates.x, y: cableData.startCoordinates.y });
+                cable.setStartComponent(startComponent);
+                cable.setEndComponent(endComponent);
+                cable.update()
+                this.cables.push(cable);
+            }
+        });
+
+        this.vlans = data.vlans;
+        
+        //update the comands
+        EventBus.emit('getCommands', this.buildJson());
+    }
+
+    private findComponentByIdentifierAndType(type: string | null, id: number | null): Pc | Switch | Router | null {
+        if (type === 'Pc') {
+            return this.pc.find(pc => pc.identifier === id) || null;
+        } else if (type === 'Switch') {
+            return this.switches.find(switch_ => switch_.identifier === id) || null;
+        } else if (type === 'Router') {
+            return this.routers.find(router => router.identifier === id) || null;
+        }
+        return null;
+    }
+
+    private saveWork(){
+
+    }
+
 }
 
-
-
-
-
-
-
+const test_object = {
+    "pcs": [
+        {
+            "x": 394.5,
+            "y": 588,
+            "textx": 394.5,
+            "texty": 628,
+            "identifier": 0,
+            "text": "PC 0",
+            "ports": {
+                "object_id": 0,
+                "type": "Switch"
+            },
+            "mask": "21312",
+            "ip": "123123123",
+            "gateway": "123123"
+        },
+        {
+            "x": 566.5,
+            "y": 587,
+            "textx": 566.5,
+            "texty": 627,
+            "identifier": 1,
+            "text": "PC 1",
+            "ports": {
+                "object_id": 0,
+                "type": "Switch"
+            },
+            "mask": "",
+            "ip": "",
+            "gateway": ""
+        },
+        {
+            "x": 729.5,
+            "y": 584,
+            "textx": 729.5,
+            "texty": 624,
+            "identifier": 2,
+            "text": "PC 2",
+            "ports": {
+                "object_id": 0,
+                "type": "Switch"
+            },
+            "mask": "",
+            "ip": "",
+            "gateway": ""
+        }
+    ],
+    "switches": [
+        {
+            "x": 603.5,
+            "y": 403,
+            "textx": 603.5,
+            "texty": 453,
+            "identifier": 0,
+            "text": "Switch 0",
+            "ports": [
+                {
+                    "object_id": 0,
+                    "type": "Pc",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/1"
+                },
+                {
+                    "object_id": 1,
+                    "type": "Pc",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/2"
+                },
+                {
+                    "object_id": 2,
+                    "type": "Pc",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/3"
+                },
+                {
+                    "object_id": 1,
+                    "type": "Router",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/4"
+                },
+                {
+                    "object_id": 0,
+                    "type": "Router",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/5"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/6"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/7"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/8"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/9"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/10"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/11"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/12"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/13"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/14"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/15"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/16"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/17"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/18"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/19"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/20"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/21"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/22"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/23"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "mode": "",
+                    "vlan": {
+                        "name": "",
+                        "id": ""
+                    },
+                    "name": "FastEthernet0/24"
+                }
+            ],
+            "hostname": "",
+            "message": ""
+        }
+    ],
+    "routers": [
+        {
+            "x": 448.5,
+            "y": 210,
+            "textx": 448.5,
+            "texty": 310,
+            "identifier": 0,
+            "text": "Router 0",
+            "ports": [
+                {
+                    "object_id": 0,
+                    "type": "Switch",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/1"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/2"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/3"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/4"
+                }
+            ],
+            "hostname": "",
+            "message": "",
+            "rip": ""
+        },
+        {
+            "x": 763.5,
+            "y": 229,
+            "textx": 763.5,
+            "texty": 329,
+            "identifier": 1,
+            "text": "Router 1",
+            "ports": [
+                {
+                    "object_id": 0,
+                    "type": "Switch",
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/1"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/2"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/3"
+                },
+                {
+                    "object_id": null,
+                    "type": null,
+                    "speed": "",
+                    "duplex": "",
+                    "description": "",
+                    "status": "",
+                    "net": "",
+                    "interface_ip": "",
+                    "interface_mask": "",
+                    "dot1q": [],
+                    "name": "FastEthernet0/4"
+                }
+            ],
+            "hostname": "",
+            "message": "",
+            "rip": ""
+        }
+    ],
+    "cables": [
+        {
+            "startCoordinates": {
+                "x": 394.5,
+                "y": 588
+            },
+            "endCoordinates": {
+                "x": 603.5,
+                "y": 403
+            },
+            "startComponent": {
+                "type": "Pc",
+                "object_id": 0
+            },
+            "endComponent": {
+                "type": "Switch",
+                "object_id": 0
+            },
+            "identifier": 0
+        },
+        {
+            "startCoordinates": {
+                "x": 566.5,
+                "y": 587
+            },
+            "endCoordinates": {
+                "x": 603.5,
+                "y": 403
+            },
+            "startComponent": {
+                "type": "Pc",
+                "object_id": 1
+            },
+            "endComponent": {
+                "type": "Switch",
+                "object_id": 0
+            },
+            "identifier": 1
+        },
+        {
+            "startCoordinates": {
+                "x": 729.5,
+                "y": 584
+            },
+            "endCoordinates": {
+                "x": 603.5,
+                "y": 403
+            },
+            "startComponent": {
+                "type": "Pc",
+                "object_id": 2
+            },
+            "endComponent": {
+                "type": "Switch",
+                "object_id": 0
+            },
+            "identifier": 2
+        },
+        {
+            "startCoordinates": {
+                "x": 763.5,
+                "y": 229
+            },
+            "endCoordinates": {
+                "x": 603.5,
+                "y": 403
+            },
+            "startComponent": {
+                "type": "Router",
+                "object_id": 1
+            },
+            "endComponent": {
+                "type": "Switch",
+                "object_id": 0
+            },
+            "identifier": 3
+        },
+        {
+            "startCoordinates": {
+                "x": 448.5,
+                "y": 210
+            },
+            "endCoordinates": {
+                "x": 603.5,
+                "y": 403
+            },
+            "startComponent": {
+                "type": "Router",
+                "object_id": 0
+            },
+            "endComponent": {
+                "type": "Switch",
+                "object_id": 0
+            },
+            "identifier": 4
+        }
+    ],
+    "vlans": []
+}
