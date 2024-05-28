@@ -74,9 +74,6 @@ const config = {
       },
     },
   },
-  plugins: [
-    require('tailwindcss-animated')
-  ],
 } satisfies Config
 
 export default config

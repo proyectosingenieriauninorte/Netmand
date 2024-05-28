@@ -1,24 +1,9 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import styles from '../app.module.css';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { login } from '@/requests/requests';
-import axios from 'axios';
-
-// Configura Axios para usar el token en todas las solicitudes
-axios.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -44,23 +29,23 @@ export default function Login() {
     return true;
   };
 
-  const validateEmail = (email: string) => {
+  const validateEmail = (email: any) => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(String(email).toLowerCase());
   };
 
-  const handleSubmit = async (event) => {
+  const handleSubmit = async (event: any) => {
     event.preventDefault();
     if (validateForm()) {
       try {
         const token = await login(email, password);
         console.log('Formulario válido, enviando datos...');
-        // Aquí puedes almacenar el token si lo necesitas
+        // Save token to localStorage
         localStorage.setItem('token', token);
-        // Redirige al usuario a la página de usuario después de una validación exitosa
+        // Redirect user to the user page after successful login
         router.push('/user');
-      } catch (error:any) {
-        setError((error.response ? error.response.data.message : error.message));
+      } catch (error: any) {
+        setError(error.response ? error.response.data.message : error.message);
       }
     } else {
       console.log('Formulario inválido, no se puede enviar.');

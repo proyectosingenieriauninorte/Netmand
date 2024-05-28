@@ -64,7 +64,7 @@ const ToolbarDemo: FC<ToolbarDemoProps> = forwardRef((_, ref) => {
         <Toolbar.Separator className="ToolbarSeparator" />
 
         <Toolbar.Link className="ToolbarLink" style={{ marginRight: 10 }}>
-          Edited 2 hours ago
+          Edited at {new Date().toLocaleTimeString()}
         </Toolbar.Link>
 
         <Toolbar.Separator className="ToolbarSeparator" />

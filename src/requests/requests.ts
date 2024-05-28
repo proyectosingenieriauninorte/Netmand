@@ -1,29 +1,26 @@
 import axios from 'axios';
-import * as dotenv from 'dotenv'
-dotenv.config()
+
+export const token = {
+  value: '', // Initialize the token value
+};
 
 const API_BASE_URL = 'http://172.208.41.46:3000/api';
-const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjIsImVtYWlsIjoiZW1haWwxMjNAZ21haWwuY29tIiwidXNlcm5hbWUiOiJldGdhciIsImlhdCI6MTcxNjg1ODkwMywiZXhwIjoxNzE2OTQ1MzAzfQ.qVHXZKISnzabm5XSxcM18OxmIq_p_MNc0TTD3rcNzBY"
 
-export function register(username: string, email: string, password: string) {
-  const config = {
-    method: 'post',
-    url: `${API_BASE_URL}/auth/register`,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: { username, email, password },
-  };
+// *** sirve *** ///
+export async function register(username: string, email: string, password: string) {
+  const url = `${API_BASE_URL}/auth/register`;
+  const data = {username, email, password };
 
-  axios(config)
-    .then((response) => {
-      console.log('Respuesta del servidor:', response.data);
-    })
-    .catch((error) => {
-      console.error('Error realizando la petición:', error);
-    });
+  try {
+    const response = await axios.post(url, data);
+    console.log('register successful, token:', response);
+  } catch (error: any) {
+    console.error('Error logging in:', error.response ? error.response.data : error.message);
+    throw error;
+  }
 }
 
+// *** sirve *** ///
 export async function login(email: string, password: string) {
   const url = `${API_BASE_URL}/auth/login`;
   const data = { email, password };
@@ -39,69 +36,107 @@ export async function login(email: string, password: string) {
   }
 }
 
-export async function fetchUserInfo(userId: string) {
-  const url = `${API_BASE_URL}/auth/users/${userId}`;
+// *** sirve *** ///
+export async function fetchUserInfo() {
+    const storedToken = localStorage.getItem('token');
+    if (!storedToken) {
+      throw new Error('Token not found in localStorage');
+    }
+
+    const url = `${API_BASE_URL}/users/me`;
+    try {
+      const response = await axios.get(url, {
+        headers: { Authorization: `Bearer ${storedToken}` }
+      });
+      console.log('Success:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('Error:', error);
+      throw error;
+    }
+}
+
+// *** sirve *** ///
+export async function fetchUserProjects() {
+  const storedToken = localStorage.getItem('token');
+  if (!storedToken) {
+    throw new Error('Token not found in localStorage');
+  }
+
+  const url = `${API_BASE_URL}/networks/me/`;
   try {
-    const response = await axios.get(url);
-    const userInfo = response.data;
-    return userInfo;
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+    console.log('Success:', response.data);
+    return response.data;
   } catch (error: any) {
-    console.error('Error fetching user info:', error.response ? error.response.data : error.message);
+    console.error('Error:', error);
     throw error;
   }
 }
 
-export async function fetchUserNetworks(userId: number) {
-  const url = `${API_BASE_URL}/auth/networks/${userId}`;
+// *** sirve *** ///
+export async function addProject(data: any) {
+  
+  const storedToken = localStorage.getItem('token');
+  if (!storedToken) {
+    throw new Error('Token not found in localStorage');
+  }
+
+  const url = `${API_BASE_URL}/networks/me/`;
   try {
-    const response = await axios.get(url);
+    const response = await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+    console.log('Success:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Error fetching user networks:', error.response ? error.response.data : error.message);
+    console.error('Error:', error);
     throw error;
   }
 }
 
-export async function createNetwork(userId: number, networkData: { name: string }) {
-  const url = `${API_BASE_URL}/auth/networks/${userId}`;
+// *** sirve *** ///
+export async function removeProject(data: any) {
+  
+  const storedToken = localStorage.getItem('token');
+  if (!storedToken) {
+    throw new Error('Token not found in localStorage');
+  }
+
+  const url = `${API_BASE_URL}/networks/me/${data}`;
   try {
-    const response = await axios.post(url, networkData);
+    const response = await axios.delete(url, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+    console.log('Success:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Error creating network:', error.response ? error.response.data : error.message);
+    console.error('Error:', error);
     throw error;
   }
 }
 
-export async function updateNetwork(userId: number, networkName: string, updatedNetworkData: object) {
-  const url = `${API_BASE_URL}/auth/networks/${userId}/${networkName}`;
-  try {
-    const response = await axios.put(url, updatedNetworkData);
-    return response.data;
-  } catch (error: any) {
-    console.error('Error updating network:', error.response ? error.response.data : error.message);
-    throw error;
-  }
-}
 
-export async function deleteNetwork(userId: number, networkName: string) {
-  const url = `${API_BASE_URL}/auth/networks/${userId}/${networkName}`;
-  try {
-    const response = await axios.delete(url);
-    return response.data;
-  } catch (error: any) {
-    console.error('Error deleting network:', error.response ? error.response.data : error.message);
-    throw error;
+// *** sirve *** ///
+export async function openCanvasProject(data: string) {
+  
+  const storedToken = localStorage.getItem('token');
+  if (!storedToken) {
+    throw new Error('Token not found in localStorage');
   }
-}
 
-export async function fetchNetwork(userId: number, networkName: string) {
-  const url = `${API_BASE_URL}/auth/networks/${userId}/${networkName}`;
+  const url = `${API_BASE_URL}/networks/me/${data}`;
+  console.log(url);
   try {
-    const response = await axios.get(url);
+    const response = await axios.get(url, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+    console.log('Success:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('Error fetching network:', error.response ? error.response.data : error.message);
+    console.error('Error:', error);
     throw error;
   }
 }
@@ -211,21 +246,26 @@ export async function getCommands(data: NetworkData) {
   }
 }
 
-export async function saveCanvas(data: NetworkData) {
 
-  const url = `${API_BASE_URL}/networks/me/queso`;
-  const file = {doc: data}
-
-  console.log( `Bearer ${token}`);
-
-  try {
-      const response = await axios.patch(url, file, {
-          headers: { Authorization: `Bearer ${token}` }
-      });
-      console.log('Success:', response.data);
-      return response.data;
-  } catch (error: any) {
-      console.error('Error:', error);
+// *** sirve *** ///
+export async function saveCanvas(data: NetworkData, name: string) {
+  
+  const storedToken = localStorage.getItem('token');
+  if (!storedToken) {
+    throw new Error('Token not found in localStorage');
   }
 
+  const url = `${API_BASE_URL}/networks/me/${name}`;
+  const file = {doc: data}
+  
+  try {
+    const response = await axios.patch(url, file, {
+      headers: { Authorization: `Bearer ${storedToken}` }
+    });
+    console.log('Success:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error:', error);
+    throw error;
+  }
 }

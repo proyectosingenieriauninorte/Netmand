@@ -6,9 +6,6 @@ import Link from 'next/link';
 import { register } from '@/requests/requests';
 
 
-
-
-
 // Función para validar el email
 const validateEmail = (email: string) => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -77,7 +74,7 @@ export default function Register() {
     if (validateForm()) {
       console.log('Formulario válido, enviando datos...');
       sendDataToDatabase();
-      router.push('./user');
+      router.push('./login');
     } else {
       console.log('Formulario inválido, no se puede enviar.');
     }
