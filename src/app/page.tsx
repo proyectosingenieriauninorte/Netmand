@@ -3,6 +3,7 @@ import styles from './app.module.css';
 import { useState, ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { register } from '@/requests/requests';
 
 
 
@@ -65,7 +66,7 @@ export default function Register() {
 
   // Manejador para enviar datos a la base de datos simulada
   const sendDataToDatabase = async () => {
-    console.log('Sending data to database:', formData);
+    register(formData.userName,formData.email,formData.password)
     setTimeout(() => {
       console.log('Data sent successfully!');
     }, 1000);
@@ -76,7 +77,7 @@ export default function Register() {
     if (validateForm()) {
       console.log('Formulario válido, enviando datos...');
       sendDataToDatabase();
-      router.push('/main');
+      router.push('./user');
     } else {
       console.log('Formulario inválido, no se puede enviar.');
     }
@@ -128,7 +129,7 @@ export default function Register() {
                     className={styles.input}
                     type="text"
                     placeholder="User Name"
-                    name="lastName"
+                    name="userName"
                     value={formData.userName}
                     onChange={handleInputChange} />
                 </div>

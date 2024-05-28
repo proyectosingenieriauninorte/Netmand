@@ -1,14 +1,30 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../app.module.css';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation'; // Importa useRouter
+import { useRouter } from 'next/navigation';
+import { login } from '@/requests/requests';
+import axios from 'axios';
+
+// Configura Axios para usar el token en todas las solicitudes
+axios.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers['Authorization'] = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => {
+        return Promise.reject(error);
+    }
+);
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter(); // Obtén una instancia del router
+  const router = useRouter();
 
   const validateForm = () => {
     if (!email && !password) {
@@ -33,13 +49,19 @@ export default function Login() {
     return re.test(String(email).toLowerCase());
   };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     if (validateForm()) {
-      console.log('Formulario válido, enviando datos...');
-     
-      // Redirige al usuario a la página de usuario después de una validación exitosa
-      router.push('/user'); 
+      try {
+        const token = await login(email, password);
+        console.log('Formulario válido, enviando datos...');
+        // Aquí puedes almacenar el token si lo necesitas
+        localStorage.setItem('token', token);
+        // Redirige al usuario a la página de usuario después de una validación exitosa
+        router.push('/user');
+      } catch (error:any) {
+        setError((error.response ? error.response.data.message : error.message));
+      }
     } else {
       console.log('Formulario inválido, no se puede enviar.');
     }
@@ -60,7 +82,7 @@ export default function Login() {
               </Link>
             </li>
             <li>
-              <Link href='../register'>
+              <Link href='/'>
                 <p className={styles.navLink}>Register</p>
               </Link>
             </li>
@@ -111,7 +133,7 @@ export default function Login() {
             </div>
           </form>
           <div className="md:w-1/2 md:ml-8 text-center text-xl animate-jump-in animate-once animate-duration-1000 animate-delay-200 animate-ease-out animate-normal animate-fill-forwards">
-            <p className="text-4xl text-slate-300">¡Create and configure your own networks!</p>
+            <p className="text-4xl text-slate-300">¡CREATE AND CONFIGURE YOUR OWN NETWORKS!</p>
           </div>
         </div>
       </div>
