@@ -10,6 +10,7 @@ import {
 import './styles.css';
 import { EventBus } from "@/canvas/EventBus";
 import { Terminal } from "lucide-react";
+import { Commands as cmd } from '@/commands/commands';
 
 const SHEET_SIDES = ["right"] as const;
 
@@ -34,8 +35,7 @@ export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
   useEffect(() => {
     const showCommands = (component: { id: number, type: string }) => {
 
-      // AQUI SE LLAMA A LA FUNCION 
-      // fetchCommands = A LO QUE RETORNA EL BACKEND;
+      fetchedCommands = new cmd();
 
       if (!fetchedCommands) {
         setCommands(['']);
