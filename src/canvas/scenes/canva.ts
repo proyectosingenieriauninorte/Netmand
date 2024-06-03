@@ -1,7 +1,6 @@
 import { Scene } from 'phaser';
 import { EventBus } from '../EventBus';
 import { Pc, Switch, Cable, Router} from '../components/netComponents';
-import { NetworkData, saveCanvas, openCanvasProject} from '@/requests/requests';
 
 export class canva extends Scene
 {   
@@ -91,7 +90,6 @@ export class canva extends Scene
             });
         });
 
-
         //this.input.on('pointerdown', this.componentDropMenu.bind(this));
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
@@ -100,6 +98,10 @@ export class canva extends Scene
             this.deleteComponentFromMenu(data); 
         });
         EventBus.on('buildJson',this.buildJson.bind(this));
+        EventBus.on('resizeCanvas', () => {
+            //update worldview
+            this.zoom(this.input.activePointer, [], 0, 0);
+        });
 
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
 
@@ -180,8 +182,11 @@ export class canva extends Scene
             });
         });
 
-        EventBus.on('updateCommands', () => {
-            EventBus.emit('getCommands', this.buildJson())
+        EventBus.on('exportProject', () => {
+            const json = this.buildJson();
+            
+            EventBus.emit('exportedProject', json); 
+
         });
 
         EventBus.on('showGrid', (val: boolean) => { 
@@ -215,12 +220,7 @@ export class canva extends Scene
     }
 
     private saveWorkspace(){
-        var urlParams = new URLSearchParams(window.location.search);
-        var name = urlParams.get('name');
-        console.log(name);
-        if(name){
-            saveCanvas(this.buildJson(), name)
-        }
+        //handle export logic
 
         EventBus.emit('showAlert', 'Project saved successfully!');
         setTimeout(() => {
@@ -229,24 +229,14 @@ export class canva extends Scene
     }
 
     private openProject(){
-        var urlParams = new URLSearchParams(window.location.search);
-        var name = urlParams.get('name');
+        
+        // hanfle import logic
 
-        if(name){
-            openCanvasProject(name)
-            .then((data) => {
-                console.log('data a dibujar xd', data);
-                this.drawCanvasComponent(data.doc);
-            })
-            .catch(error => {
-                console.error('Error fetching projects:', error);
-            });
-
-            EventBus.emit('showAlert', 'Project loaded successfully');
-            setTimeout(() => {
-                EventBus.emit('hideAlert');
-            }, 3000);
-        }
+        EventBus.emit('showAlert', 'Project loaded successfully');
+        setTimeout(() => {
+            EventBus.emit('hideAlert');
+        }, 3000);
+    
     }
 
     /******************************************************************
@@ -784,7 +774,6 @@ export class canva extends Scene
 
     private deactivateToolbar() {
         var toolbar = document.getElementById('Toolbar');
-        console.log('toolbar', toolbar);
         if (toolbar) {
             toolbar.style.pointerEvents = 'none';
         }
@@ -1050,3 +1039,89 @@ export class canva extends Scene
     }
 }
 
+interface NetworkData {
+    pcs: {
+        x: number;
+        y: number;
+        textx: number;
+        texty: number;
+        identifier: number;
+        text: string;
+        ports: {
+            object_id: number | undefined;
+            type: string | null;
+        };
+        mask: string;
+        ip: string;
+        gateway: string;
+    }[];
+    switches: {
+        x: number;
+        y: number;
+        textx: number;
+        texty: number;
+        identifier: number;
+        text: string;
+        ports: {
+            object_id: number | null;
+            type: string | null;
+            speed: string;
+            duplex: string;
+            description: string;
+            status: string;
+            mode: string;
+            vlan: {
+                name: string;
+                id: string;
+            };
+            name: string;
+        }[];
+        hostname: string;
+        message: string;
+    }[];
+    routers: {
+        x: number;
+        y: number;
+        textx: number;
+        texty: number;
+        identifier: number;
+        text: string;
+        ports: {
+            object_id: number | null;
+            type: string | null;
+            speed: string;
+            duplex: string;
+            description: string;
+            status: string;
+            net: string;
+            interface_ip: string;
+            interface_mask: string;
+            dot1q: {
+                vlan: {
+                    name: string;
+                    id: string;
+                };
+                ip: string;
+                mask: string;
+            }[];
+            name: string;
+        }[];
+        hostname: string;
+        message: string;
+        rip: string;
+    }[];
+    cables: {
+        startCoordinates: { x: number; y: number };
+        endCoordinates: { x: number; y: number };
+        startComponent: {
+            type: string | null;
+            object_id: number | null;
+        };
+        endComponent: {
+            type: string | null;
+            object_id: number | null;
+        };
+        identifier: number;
+    }[];
+    vlans: string[];
+}

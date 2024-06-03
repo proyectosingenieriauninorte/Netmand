@@ -1,9 +1,21 @@
 'use client';
 import dynamic from 'next/dynamic';
+import { EventBus } from '@/canvas/EventBus';
 
 const AppWithoutSSR = dynamic(() => import('./App'), { ssr: false });
 
+
 export default function project() {
+
+    const exportProject = () => {
+        console.log('exporting project');
+
+        EventBus.emit('exportProject');
+
+        EventBus.once('exportedProject', (project: any) => {
+            console.log(project);
+        });
+    }
 
     return (
         <main className="h-screen flex flex-col">
@@ -17,7 +29,7 @@ export default function project() {
                     
                     <u>
                     <button className='button'>import</button>
-                    <button className='button'>export</button>
+                    <button className='button' onClick={exportProject}>export</button>
                     </u>
                 </nav>
             </div>

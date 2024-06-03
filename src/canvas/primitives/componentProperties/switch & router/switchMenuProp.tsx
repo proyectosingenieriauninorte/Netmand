@@ -149,7 +149,6 @@ const SwitchProperties: FC<SwitchPropertiesProps> = forwardRef((_, ref) => {
     setTimeout(() => {
       EventBus.emit('hideAlert');
     }, 3000);
-    EventBus.emit('updateCommands');
   };
 
   return (
@@ -214,7 +213,7 @@ interface ScrollAreaDemoProps {
 const ScrollAreaDemo: FC<ScrollAreaDemoProps> = ({ setCurrentInterface }) => (
   <ScrollArea.Root className="ScrollAreaRoot">
     <ScrollArea.Viewport className="ScrollAreaViewport">
-      <div style={{}}>
+      <div style={{display: 'flex'}}>
         {Array.from({ length: 24 }).map((_, index) => (
           <button
             key={index}

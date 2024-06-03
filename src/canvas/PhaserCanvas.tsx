@@ -35,6 +35,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 game.current.scale.resize(canvasContainer.clientWidth, canvasContainer.clientHeight);
             }
         }
+        EventBus.emit('resizeCanvas');
     };
 
     const handlePropertiesPanelResize = () => {

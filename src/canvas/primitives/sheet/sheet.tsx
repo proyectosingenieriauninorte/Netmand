@@ -10,7 +10,6 @@ import {
 import './styles.css';
 import { EventBus } from "@/canvas/EventBus";
 import { Terminal } from "lucide-react";
-import { NetworkData, getCommands } from '@/requests/requests';
 
 const SHEET_SIDES = ["right"] as const;
 
@@ -26,11 +25,7 @@ interface Commands {
   routersCommands: string[][];
 }
 
-let fetchedCommands: Commands | null = null;
-
-EventBus.on('getCommands', async (data: NetworkData) => {
-  fetchedCommands = await getCommands(data);
-});
+let fetchedCommands: Commands;
 
 export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
   const [open, setOpen] = useState(false);
@@ -38,6 +33,10 @@ export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
 
   useEffect(() => {
     const showCommands = (component: { id: number, type: string }) => {
+
+      // AQUI SE LLAMA A LA FUNCION 
+      // fetchCommands = A LO QUE RETORNA EL BACKEND;
+
       if (!fetchedCommands) {
         setCommands(['']);
         setOpen(true);
