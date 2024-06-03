@@ -8,7 +8,7 @@ const config: Phaser.Types.Core.GameConfig = {
     width: '100%',
     height: '100%',
     parent: 'canva-container',
-    backgroundColor: '#C1C4CA',
+    backgroundColor: '#E5E4E2',
     scene: [
         canva,
     ],
@@ -27,7 +27,6 @@ const StartGame = (parent: string) => {
         parent: parent,
     });
 
-    game.canvas.classList.add('rounded-xl');
     game.canvas.id = 'canvas';
     
     if (gameContainer) {

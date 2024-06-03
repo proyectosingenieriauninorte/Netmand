@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, FC, forwardRef } from 'react';
 import * as Toolbar from '@radix-ui/react-toolbar';
-import { FC, forwardRef, useEffect } from 'react';
 import { EventBus } from '@/canvas/EventBus';
 import SliderDemo from '../slider/slider';
 import * as Popover from '@radix-ui/react-popover';
@@ -11,33 +10,55 @@ interface ToolbarDemoProps {
   style?: React.CSSProperties;
 }
 
-const pcClicked = () => {
+const pcClicked = (event: React.MouseEvent<HTMLButtonElement>) => {
   EventBus.emit('addPc');
+  event.currentTarget.blur();
 };
 
-const switchClicked = () => {
+const switchClicked = (event: React.MouseEvent<HTMLButtonElement>) => {
   EventBus.emit('addSwitch');
-}
+  event.currentTarget.blur();
+};
 
-const routerClicked = () => {
+const routerClicked = (event: React.MouseEvent<HTMLButtonElement>) => {
   EventBus.emit('addRouter');
-}
+  event.currentTarget.blur();
+};
 
-const cableClicked = () => {
+const cableClicked = (event: React.MouseEvent<HTMLButtonElement>) => {
   EventBus.emit('addCable');
-}
+  event.currentTarget.blur();
+};
 
 const ToolbarDemo: FC<ToolbarDemoProps> = forwardRef((_, ref) => {
+  const [isGridChecked, setIsGridChecked] = useState(true);
+  const [isAnimationChecked, setIsAnimationChecked] = useState(true); // Initially checked
 
   useEffect(() => {
+  
     return () => {
+
     };
   }, []);
 
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = event.target.checked;
+    setIsGridChecked(isChecked);
+    EventBus.emit('showGrid', isChecked);
+    event.currentTarget.blur();
+  };
+
+  const handleAnimationCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = event.target.checked;
+    setIsAnimationChecked(isChecked);
+    EventBus.emit('toggleCableAnimations', isChecked); // Emit the updated state value
+    event.currentTarget.blur();
+  };
+
   return (
-    <div style={{ pointerEvents: 'auto', bottom: '2%',  left: '50%', transform: 'translateX(-50%)', position: 'absolute'}}>
+    <div style={{ pointerEvents: 'auto', bottom: '2%', left: '50%', transform: 'translateX(-50%)', position: 'absolute'}}>
       
-      <Toolbar.Root className="ToolbarRoot" aria-label="Formatting options">
+      <Toolbar.Root id='Toolbar' className="ToolbarRoot" aria-label="Formatting options">
           
         <Toolbar.Button id="pc-btton" className="ToolbarButton pcButton" onClick={pcClicked}>
           <span className="ToolbarLabel">PC</span>
@@ -76,6 +97,22 @@ const ToolbarDemo: FC<ToolbarDemoProps> = forwardRef((_, ref) => {
         <Toolbar.Separator className="ToolbarSeparator" />
 
         <PopoverDemo />
+
+        <Toolbar.Separator className="ToolbarSeparator" />
+
+        <div className="checkbox-wrapper-27">
+          <label className="checkbox">
+            <input type="checkbox" checked={isGridChecked} onChange={handleCheckboxChange} />
+            <span className="checkbox__icon"> Grid</span>
+          </label>
+        </div>
+
+        <div className="checkbox-wrapper-27">
+          <label className="checkbox">
+            <input type="checkbox" checked={isAnimationChecked} onChange={handleAnimationCheckboxChange} />
+            <span className="checkbox__icon"> Animations</span>
+          </label>
+        </div>
 
       </Toolbar.Root>
     </div>
@@ -195,5 +232,3 @@ const ScrollAreaDemo: FC<ScrollAreaDemoProps> = ({ vlans, onDeleteVlan }) => (
     <ScrollArea.Corner className="ScrollAreaCorner" />
   </ScrollArea.Root>
 );
-
-

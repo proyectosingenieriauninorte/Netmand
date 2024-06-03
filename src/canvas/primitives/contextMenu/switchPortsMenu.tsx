@@ -65,7 +65,6 @@ const SwitchPortMenu: FC<SwitchPortMenuProps> = ({ style }) => {
 
   const selectedPort = (key: number) => () => {
     EventBus.emit('selectedPort', key);
-    console.log('selected port', key);
     hidePorts();
   }
 

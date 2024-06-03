@@ -12,7 +12,16 @@ export class canva extends Scene
     private cables: Cable[] = [];
     private vlans: string[] = [];
     private isBeingAddedToCanvas: boolean = false;
+    private cableAnimation: boolean = true; 
     private cableInProgress: Cable | null = null;
+    private gridTileSprite: Phaser.GameObjects.TileSprite;
+    private isSpacePressed: boolean = false;
+    private isDragging: boolean = false;
+    private dragStartX: number = 0;
+    private dragStartY: number = 0;
+    private cameraStartX: number = 0;
+    private cameraStartY: number = 0;
+
     constructor (){super('canva');}
 
     init (){}
@@ -22,9 +31,67 @@ export class canva extends Scene
         this.load.image('pc_component', 'pc.png');
         this.load.image('switch_component', 'switch.png');
         this.load.image('router_component', 'router.png');
+        this.createGridTexture();
     }
 
-    create (){ 
+    create (){
+
+        /******************************************************************
+        
+                        ** MOVING AROUND THE CANVAS **
+
+        ********************************************************************/
+        this.input.keyboard?.on('keydown-SPACE', () => {
+            this.isSpacePressed = true;
+            this.input.setDefaultCursor('grab');
+        });
+        this.input.keyboard?.on('keyup-SPACE', () => {
+            this.isSpacePressed = false;
+            this.input.setDefaultCursor('default');
+        });
+
+        // Add pointer down listener
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            if (this.isSpacePressed && pointer.leftButtonDown()) {
+                this.isDragging = true;
+                this.dragStartX = pointer.x;
+                this.dragStartY = pointer.y;
+                this.cameraStartX = this.cameras.main.scrollX;
+                this.cameraStartY = this.cameras.main.scrollY;
+                this.input.setDefaultCursor('grabbing');
+            }
+        });
+
+        // Add pointer up listener
+        this.input.on('pointerup', (pointer: Phaser.Input.Pointer) => {
+            if (this.isDragging) {
+                this.isDragging = false;
+            }
+        });
+
+        // Add pointer move listener
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            if (this.isDragging) {
+                
+                const dragOffsetX = pointer.x - this.dragStartX;
+                const dragOffsetY = pointer.y - this.dragStartY;
+
+                this.cameras.main.scrollX = this.cameraStartX - dragOffsetX;
+                this.cameras.main.scrollY = this.cameraStartY - dragOffsetY;
+
+                this.updateGridPosition();
+                this.drawGrid();
+            }
+        });
+
+        EventBus.on('toggleCableAnimations', (val: boolean) => {
+            this.cableAnimation = val;
+            this.cables.forEach(cable => {
+                cable.toggleAnimations(val);
+            });
+        });
+
+
         //this.input.on('pointerdown', this.componentDropMenu.bind(this));
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
@@ -33,13 +100,8 @@ export class canva extends Scene
             this.deleteComponentFromMenu(data); 
         });
         EventBus.on('buildJson',this.buildJson.bind(this));
+
         EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
-        EventBus.on('sliderChange', (value: number) => {
-            // Map the slider value (0-100) to the zoom range (0.6-2)
-            const newZoom = Phaser.Math.Linear(0.6, 2, value / 100);
-            this._zoom = newZoom;
-            this.cameras.main.setZoom(this._zoom);
-        });
 
         EventBus.on('displayComponentProperties', (data: {id: number, type: string}) => {
 
@@ -108,12 +170,6 @@ export class canva extends Scene
                 });
         });
         
-        this.input.on('wheel', (pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) => {
-            if (pointer.event.ctrlKey) {
-                this.zoom(pointer, gameObjects, deltaX, deltaY);
-            }
-        });
-
         // Event listener for deleting a cable
         EventBus.on('confirmDeletion', () => {
             this.cables.forEach(cable => {
@@ -128,6 +184,12 @@ export class canva extends Scene
             EventBus.emit('getCommands', this.buildJson())
         });
 
+        EventBus.on('showGrid', (val: boolean) => { 
+            this.gridTileSprite.setVisible(val);
+        });
+
+        EventBus.on('saveWork', this.saveWorkspace.bind(this));
+
         this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
             if (event.ctrlKey && event.key === 's') {
                 event.preventDefault();
@@ -135,7 +197,20 @@ export class canva extends Scene
             }
         });
 
-        EventBus.on('saveWork', this.saveWorkspace.bind(this));
+        this.input.on('wheel', (pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) => {
+            if (pointer.event.ctrlKey) {
+                this.zoom(pointer, gameObjects, deltaX, deltaY);
+            }
+        });
+        
+        EventBus.on('sliderChange', (value: number) => {
+            // Map the slider value (0-100) to the zoom range (0.6-2)
+            const newZoom = Phaser.Math.Linear(0.6, 2, value / 100);
+            this.updateZoom(newZoom);
+        });
+
+        this.gridTileSprite = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'gridTexture');
+        this.gridTileSprite.setOrigin(0, 0);
         this.openProject();
     }
 
@@ -353,6 +428,20 @@ export class canva extends Scene
                                 ** ZOOM **
 
     ********************************************************************/
+    private updateZoom(newZoom: number) {
+        this._zoom = Phaser.Math.Clamp(newZoom, 0.5, 2);
+        this.cameras.main.setZoom(this._zoom);
+    
+        this.cameras.main.once('prerender', () => {
+            this.drawGrid();
+            this.updateGridPosition();
+        });
+    
+        // Calculate the proportional slider value
+        const sliderValue = Phaser.Math.Linear(0, 100, (this._zoom - 0.6) / (2 - 0.6));
+        EventBus.emit('updateSlider', sliderValue);
+    }
+    
     private zoom(pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) {
         let newZoom: number;
         if (deltaY < 0) {
@@ -360,13 +449,49 @@ export class canva extends Scene
         } else {
             newZoom = this._zoom / 1.1; // zoom out
         }
-        this._zoom = Phaser.Math.Clamp(newZoom, 0.6, 2);
-        this.cameras.main.setZoom(this._zoom);
+        this.updateZoom(newZoom);
+    }                           
 
-        // Calculate the proportional slider value
-        const sliderValue = Phaser.Math.Linear(0, 100, (this._zoom - 0.6) / (2 - 0.6));
-        
-        EventBus.emit('updateSlider', sliderValue);
+    private createGridTexture() {
+        let graphics = this.add.graphics();
+        graphics.clear();
+        graphics.fillStyle(0xE5E4E2, 1.0); // Fill the background with white or transparent color
+        graphics.fillRect(0, 0, 1000, 1000); // Fill a white or transparent rectangle
+    
+        graphics.lineStyle(1, 0x808080, 1.0);
+    
+        // Draw the grid lines within a specified area (e.g., 1000x1000 pixels)
+        for (let y = 0; y <= 1000; y += 50) {
+            graphics.moveTo(0, y);
+            graphics.lineTo(1000, y);
+        }
+        for (let x = 0; x <= 1000; x += 50) {
+            graphics.moveTo(x, 0);
+            graphics.lineTo(x, 1000);
+        }
+    
+        graphics.strokePath();
+    
+        // Create a texture from the graphics object
+        graphics.generateTexture('gridTexture', 1000, 1000);
+    
+        // Clean up
+        graphics.destroy();
+    }
+
+    private drawGrid() {
+        const visibleArea = this.cameras.main.worldView;
+
+        // Update the TileSprite size and position
+        this.gridTileSprite.setSize(visibleArea.width, visibleArea.height);
+        this.gridTileSprite.setPosition(visibleArea.x, visibleArea.y);
+        this.gridTileSprite.setTileScale(this._zoom, this._zoom);
+    }
+
+    private updateGridPosition() {
+        const visibleArea = this.cameras.main.worldView;
+        this.gridTileSprite.setPosition(visibleArea.x, visibleArea.y);
+        this.gridTileSprite.setDepth(-1);
     }
 
     /******************************************************************
@@ -392,6 +517,7 @@ export class canva extends Scene
         };
 
         this.makeComponentsUndraggable();
+        this.deactivateToolbar();
 
         const handleCableCreation = (pointer: Phaser.Input.Pointer) => {
 
@@ -414,6 +540,7 @@ export class canva extends Scene
                             }
                             this.cableInProgress = new Cable(this, this.cables.length, { x: component.image.x, y: component.image.y });
                             this.cableInProgress.setStartComponent(component);
+                            this.cableInProgress.toggleAnimations(this.cableAnimation);
                             this.cableInProgress.updateEndCoordinates({ x: component.image.x, y: component.image.y });
                             this.cableInProgress.isSomethingBeingAdded = true;
                             component.targetPort = key;
@@ -444,6 +571,7 @@ export class canva extends Scene
                             EventBus.emit('hideAlert');
 
                             this.makeComponentsDraggable();
+                            this.activateToolbar();
                                 
                             // Clean up event listeners
                             this.input.off('pointermove', handleCableMove);
@@ -469,11 +597,12 @@ export class canva extends Scene
             EventBus.emit('hideAlert');
             this.input.off('pointermove', handleCableMove);
             this.input.off('pointerdown', handleCableCreation);
+            this.activateToolbar();
         }
 
         //Cancel cable creation on ESC key press
         this.input.keyboard?.on('keydown-ESC', () => {
-           handleCancel();
+            handleCancel();
         });
 
         EventBus.once('abortCable', () => {
@@ -615,6 +744,7 @@ export class canva extends Scene
             }
     
             EventBus.emit('showAlert', message);
+            this.deactivateToolbar();
 
             const handlePointerMove = (pointer: Phaser.Input.Pointer) => {
                 if (this.isBeingAddedToCanvas) {
@@ -629,6 +759,7 @@ export class canva extends Scene
                     this.input.off('pointermove', handlePointerMove);
                     this.input.off('pointerdown', handlePointerDown);
                     this.input.keyboard?.off('keydown-ESC', handleEscape);
+                    this.activateToolbar();
                 }
             };
     
@@ -640,6 +771,7 @@ export class canva extends Scene
                     this.input.off('pointermove', handlePointerMove);
                     this.input.off('pointerdown', handlePointerDown);
                     this.input.keyboard?.off('keydown-ESC', handleEscape);
+                    this.activateToolbar();
                     // Remove the component since the addition is aborted
                 }
             };
@@ -649,10 +781,25 @@ export class canva extends Scene
             this.isBeingAddedToCanvas = true;
         }
     }
-    
+
+    private deactivateToolbar() {
+        var toolbar = document.getElementById('Toolbar');
+        console.log('toolbar', toolbar);
+        if (toolbar) {
+            toolbar.style.pointerEvents = 'none';
+        }
+    }
+
+    private activateToolbar() {
+        var toolbar = document.getElementById('Toolbar');
+        if (toolbar) {
+            toolbar.style.pointerEvents = 'auto';
+        }
+    }
+
     /******************************************************************
      * 
-                        ** Overlay Div Properties **
+                        ** BUILD JSON **
 
     ********************************************************************/
     private buildJson(){

@@ -88,7 +88,6 @@ export class ImageManager{
         if (imageGameObject === this.image) {
             EventBus.emit('hideAlert');
         }
-        this.image.setDepth(-1);
     }
     
     private handleDrag(pointer: Phaser.Input.Pointer, imageGameObject: Phaser.GameObjects.Image, dragX: number, dragY: number) {
@@ -507,21 +506,23 @@ export class Cable {
     startCoordinates: { x: number, y: number } = { x: 0, y: 0 };
     startComponent: Pc | Switch | Router | null = null;
     endCoordinates: { x: number, y: number } = { x: 0, y: 0 };
-    endComponent: Pc | Switch | Router  | null = null;
+    endComponent: Pc | Switch | Router | null = null;
     identifier: number;
     isSomethingBeingAdded: boolean = false;
     selected: boolean = false;
     private line: Phaser.GameObjects.Graphics;
+    private lightLine: Phaser.GameObjects.Graphics;
     private interactiveArea: Phaser.GameObjects.Zone;
-    
-    
+    private lightTween?: Phaser.Tweens.Tween;
+    private lightTweenProgress: number = 0; // To store the current tween progress
 
-    constructor(scene: Phaser.Scene, identifier:number, startCoordinates: { x: number, y: number }) {
+    constructor(scene: Phaser.Scene, identifier: number, startCoordinates: { x: number, y: number }) {
         this.scene = scene;
         this.startCoordinates = startCoordinates;
-        this.endCoordinates = {x: startCoordinates.x + 1, y: startCoordinates.y + 1};
+        this.endCoordinates = { x: startCoordinates.x + 1, y: startCoordinates.y + 1 };
         this.identifier = identifier;
         this.line = scene.add.graphics();
+        this.lightLine = scene.add.graphics();
         this.interactiveArea = scene.add.zone(0, 0, 1, 1).setOrigin(0.5, 0.5); // Center the origin
         this.draw();
 
@@ -529,7 +530,7 @@ export class Cable {
         this.scene.input.on('pointerdown', this.onSelect, this);
         window.addEventListener('mousemove', this.update.bind(this));
         window.addEventListener('keydown', this.handleKeyDown.bind(this));
-
+        EventBus.emit('cableCreated');
     }
 
     private handleKeyDown(event: KeyboardEvent): void {
@@ -542,7 +543,7 @@ export class Cable {
         this.line.clear();
         this.line.lineStyle(5, this.selected ? 0xff0000 : 0x000000); // Red if selected, black otherwise
         this.line.strokeLineShape(new Phaser.Geom.Line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y));
-        
+
         // Update the interactive area to cover the line
         const lineLength = Phaser.Math.Distance.Between(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
         const midPointX = (this.startCoordinates.x + this.endCoordinates.x) / 2;
@@ -558,10 +559,9 @@ export class Cable {
     }
 
     private onSelect(event: Phaser.Input.Pointer): void {
-        if(!this.isSomethingBeingAdded) {
+        if (!this.isSomethingBeingAdded) {
             // Check if the mouse pointer intersects with the cable line
             const line = new Phaser.Geom.Line(this.startCoordinates.x, this.startCoordinates.y, this.endCoordinates.x, this.endCoordinates.y);
-            
             const worldPoints = this.scene.input.activePointer.positionToCamera(this.scene.cameras.main) as Phaser.Math.Vector2;
 
             // Define the polygonal area around the line
@@ -574,15 +574,64 @@ export class Cable {
 
             const hitArea = new Phaser.Geom.Polygon([p1.x, p1.y, p2.x, p2.y, p3.x, p3.y, p4.x, p4.y]);
 
-            if(hitArea.contains(worldPoints.x, worldPoints.y)) {
+            if (hitArea.contains(worldPoints.x, worldPoints.y)) {
                 this.selected = true;
-            }else{
+            } else {
                 this.selected = false;
             }
-        }else{
+        } else {
             this.selected = false;
         }
         this.draw();
+    }
+
+    private startLightAnimation(): void {
+        const duration = 1000; // Duration of the animation in milliseconds
+        const repeat = -1; // Infinite loop
+
+        this.lightTween = this.scene.tweens.addCounter({
+            from: this.lightTweenProgress,
+            to: 1,
+            duration: duration * (1 - this.lightTweenProgress), // Resume from where it was left
+            repeat: repeat,
+            onUpdate: (tween: Phaser.Tweens.Tween, target: any) => {
+                this.lightTweenProgress = target.value; // Update the progress
+                if (this.lightTweenProgress === 1) {
+                    this.lightTweenProgress = 0; // Reset the progress
+                    this.lightTween?.stop();
+                    this.lightTween = undefined;
+                    this.lightLine.clear();
+                    this.startLightAnimation(); // Restart the animation
+                }
+                this.drawLightLine(this.lightTweenProgress);
+            },
+        });
+    }
+
+    private drawLightLine(t: number): void {
+        this.lightLine.clear();
+        const lightColor = 0xffff00; // Yellow light
+
+        const startX = Phaser.Math.Interpolation.Linear([this.startCoordinates.x, this.endCoordinates.x], t);
+        const startY = Phaser.Math.Interpolation.Linear([this.startCoordinates.y, this.endCoordinates.y], t);
+
+        const endX = Phaser.Math.Interpolation.Linear([this.startCoordinates.x, this.endCoordinates.x], Math.min(t + 0.1, 1));
+        const endY = Phaser.Math.Interpolation.Linear([this.startCoordinates.y, this.endCoordinates.y], Math.min(t + 0.1, 1));
+
+        this.lightLine.lineStyle(5, lightColor);
+        this.lightLine.strokeLineShape(new Phaser.Geom.Line(startX, startY, endX, endY));
+    }
+
+    public toggleAnimations(enable: boolean): void {
+        if (enable) {
+            this.startLightAnimation();
+        } else {
+            if (this.lightTween) {
+                this.lightTween.stop();
+                this.lightTween = undefined;
+                this.lightLine.clear();
+            }
+        }
     }
 
     public update(): void {
@@ -623,9 +672,13 @@ export class Cable {
 
     public destroy(): void {
         this.line.destroy();
+        this.lightLine.destroy();
         this.interactiveArea.destroy();
         this.startComponent = null;
         this.endComponent = null;
+        if (this.lightTween) {
+            this.lightTween.stop();
+            this.lightTween.remove(); // Properly remove the tween
+        }
     }
 }
-

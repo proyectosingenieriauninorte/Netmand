@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { IRefPhaserGame, PhaserGame } from '../../canvas/PhaserCanvas'
+import { IRefPhaserGame, PhaserGame } from '../canvas/PhaserCanvas'
 
 function App()
 {
@@ -13,7 +13,7 @@ function App()
     }
 
     return (
-        <div id="app" className='flex-grow'>
+        <div id="app" className='flex-grow container2'>
             <PhaserGame ref={phaserRef} currentActiveScene={currentScene} />
         </div>
     )
