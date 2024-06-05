@@ -11,6 +11,7 @@ import PcProperties from './primitives/componentProperties/pcMenuProp';
 import SwitchProperties from './primitives/componentProperties/switch & router/switchMenuProp';
 import RouterProperties from './primitives/componentProperties/switch & router/routerMenuProp';
 import ToolbarDemo from './primitives/toolbar/toolbar';
+import ImportAlert from './primitives/alertDialog/ImporAlert';
 import { SheetSide } from './primitives/sheet/sheet';
 
 export interface IRefPhaserGame {
@@ -133,6 +134,7 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 {<RouterProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterProperties */}
                 {<ToolbarDemo style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render ToolbarDemo */}
                 {<SheetSide style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SheetSide */}
+                {<ImportAlert style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render ImportAlert */}
             </div>
         </div>
     );

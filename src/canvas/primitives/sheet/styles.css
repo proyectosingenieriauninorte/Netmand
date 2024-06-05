@@ -39,12 +39,40 @@
   color: var(--violet-11);
 }
 
+@keyframes slideInFromLeft {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes slideOutToLeft {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
 .SheetContent {
   padding: 20px;
   border-radius: 6px;
   background-color: var(--mauve-1);
   box-shadow: 0 2px 10px var(--black-a7);
-  width: 3000px;
+  width: 3000px; /* Adjust width as necessary */
+  animation-duration: 0.3s; /* Animation duration */
+  animation-timing-function: ease-in-out; /* Animation timing function */
+}
+
+.SheetContent.slide-in {
+  animation-name: slideOutToLeft;
+}
+
+.SheetContent.slide-out {
+  animation-name: slideInFromLeft;
 }
 
 .SheetHeader {

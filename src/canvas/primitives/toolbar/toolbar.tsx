@@ -172,6 +172,17 @@ const PopoverDemo: FC = () => {
     }, 3000);
   };
 
+  useEffect(() => {
+    const handler = (updatedVlans: string[]) => {
+      setVlans(updatedVlans);
+    };
+    EventBus.on('updateVlans', handler);
+
+    return () => {
+      EventBus.off('updateVlans', handler);
+    };
+  }, []);
+
   return (
     <Popover.Root>
       <Popover.Trigger asChild>

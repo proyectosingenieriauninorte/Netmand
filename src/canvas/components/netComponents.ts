@@ -106,6 +106,9 @@ export class ImageManager{
             this.dragBox.x = dragX - this.image.width / 2;
             this.dragBox.y = dragY - this.image.height / 2;
             this.clickbox.setVisible(false);
+
+            console.log('image coordinates: ', imageGameObject.x, imageGameObject.y)
+            console.log('dragbox coordinates: ', this.dragBox.x, this.dragBox.y)
         }
     }
 
@@ -166,6 +169,13 @@ export class Pc extends ImageManager {
             identifier: this.identifier,
             type: 'Pc'
         });
+    }
+
+    public destroy() {
+        this.image.destroy();
+        this.dragBox.destroy();
+        this.text.destroy();
+        this.clickbox.destroy();
     }
 
     public updateProperties(data: { ip: string, mask: string, gateway: string }) {
@@ -289,6 +299,13 @@ export class Switch extends ImageManager {
         this.ports = data.ports;
         this.message = data.message;
         this.hostname = data.hostname;
+    }
+
+    public destroy() {
+        this.image.destroy();
+        this.dragBox.destroy();
+        this.text.destroy();
+        this.clickbox.destroy();
     }
 
     public showSwitchProperties() {
@@ -428,6 +445,14 @@ export class Router extends ImageManager {
         this.hostname = data.hostname;
         this.rip = data.rip;
     }
+    
+    public destroy() {
+        this.image.destroy();
+        this.dragBox.destroy();
+        this.text.destroy();
+        this.clickbox.destroy();
+    }
+
 
     public showRouterProperties() {
         EventBus.emit('showRouterProperties', {

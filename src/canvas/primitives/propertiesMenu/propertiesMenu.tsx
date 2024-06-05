@@ -79,13 +79,26 @@ const PropertiesMenu: FC<PropertiesMenuProps> = ({ style }) => {
   };
 
   const handleSettings = () => {
-    console.log(componentProps);
     EventBus.emit('displayComponentProperties', {id: componentProps.id, type: componentProps.type});
   }
 
   const handleCommands = () => {
-    EventBus.emit('showCommands', {id: componentProps.id, type: componentProps.type});
-  }
+
+    const fetchAndShowCommands = () => {
+      return new Promise<void>((resolve) => {
+        const handleFetchedCommands = () => {
+          EventBus.off('fetchedCommands', handleFetchedCommands);
+          resolve();
+        };
+        EventBus.on('fetchedCommands', handleFetchedCommands);
+        EventBus.emit('fetchCommands');
+      });
+    };
+  
+    fetchAndShowCommands().then(() => {
+      EventBus.emit('showCommands', { id: componentProps.id, type: componentProps.type });
+    });
+  };
 
   return (
     <div id="comp-properties" style={{ position: 'absolute', display: 'none' }}>

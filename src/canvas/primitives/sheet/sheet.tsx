@@ -26,18 +26,24 @@ interface Commands {
   routersCommands: string[][];
 }
 
-let fetchedCommands: Commands;
+let fetchedCommandsInstance: cmd | null = null;
 
 export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
   const [open, setOpen] = useState(false);
   const [commands, setCommands] = useState<string[]>([]);
 
   useEffect(() => {
+
+    const handleFetchedCommands = (commands: Commands) => {
+      fetchedCommandsInstance = new cmd(commands); 
+    };
+
+    EventBus.on('fetchedCommands', handleFetchedCommands);
+
+    // Add event listener for showCommands
     const showCommands = (component: { id: number, type: string }) => {
 
-      fetchedCommands = new cmd();
-
-      if (!fetchedCommands) {
+      if (!fetchedCommandsInstance) {
         setCommands(['']);
         setOpen(true);
         return;
@@ -47,13 +53,13 @@ export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
 
       switch (component.type) {
         case 'Pc':
-          commandsArray = fetchedCommands?.pcsCommands?.[component.id] || [];
+          commandsArray = fetchedCommandsInstance?.pcsCommands?.[component.id] || [];
           break;
         case 'Switch':
-          commandsArray = fetchedCommands?.switchesCommands?.[component.id] || [];
+          commandsArray = fetchedCommandsInstance?.switchesCommands?.[component.id] || [];
           break;
         case 'Router':
-          commandsArray = fetchedCommands?.routersCommands?.[component.id] || [];
+          commandsArray = fetchedCommandsInstance?.routersCommands?.[component.id] || [];
           break;
         default:
           commandsArray = [];
@@ -70,7 +76,9 @@ export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
 
     EventBus.on('showCommands', showCommands);
 
+    // Clean up event listeners on unmount
     return () => {
+      EventBus.off('fetchedCommands', handleFetchedCommands);
       EventBus.off('showCommands', showCommands);
     };
   }, []);
@@ -85,7 +93,7 @@ export const SheetSide: FC<SheetProps> = forwardRef((_, ref) => {
     <div className="SheetSideContainer" style={{ pointerEvents: 'auto', position: 'absolute', bottom: '2%' }}>
       {SHEET_SIDES.map((side) => (
         <Sheet key={side} open={open} onOpenChange={setOpen}>
-          <SheetContent side={side} className="SheetContent">
+          <SheetContent side={side} className={`SheetContent ${open ? 'slide-in' : 'slide-out'}`}>
             <SheetHeader className="SheetHeader">
               <SheetTitle className="SheetTitle">Commands Visualization</SheetTitle>
               <SheetDescription className="SheetDescription">

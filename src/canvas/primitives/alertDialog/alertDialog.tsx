@@ -49,9 +49,6 @@ export const AlertDialogDemo: FC<AlertDialogProps> = forwardRef((_, ref) => {
     return (
       <div id='alertDialog'>
         <AlertDialog open={open} onOpenChange={setOpen}>
-          <AlertDialogTrigger asChild>
-            <Button variant="outline" style={{ pointerEvents: 'all' }}>Show Dialog</Button>
-          </AlertDialogTrigger>
           <AlertDialogContent className="AlertDialogContent">
             <AlertDialogHeader className="AlertDialogHeader">
               <AlertDialogTitle className="AlertDialogTitle">Delete Permanently?</AlertDialogTitle>

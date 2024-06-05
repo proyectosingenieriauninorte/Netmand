@@ -90,20 +90,20 @@ export class canva extends Scene
             });
         });
 
-        //this.input.on('pointerdown', this.componentDropMenu.bind(this));
         EventBus.on('addPc', () => {this.addComponent('pc'); this.isBeingAddedToCanvas = true;});
+
         EventBus.on('addSwitch', () => {this.addComponent('switch'); this.isBeingAddedToCanvas = true;});
+
         EventBus.on('addRouter', () => {this.addComponent('router'); this.isBeingAddedToCanvas = true;});
-        EventBus.on('deleteComponent', (data: {x: number, y: number, obj: string, id: number}) => { 
-            this.deleteComponentFromMenu(data); 
-        });
+
+        EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
+
         EventBus.on('buildJson',this.buildJson.bind(this));
+
         EventBus.on('resizeCanvas', () => {
             //update worldview
             this.zoom(this.input.activePointer, [], 0, 0);
         });
-
-        EventBus.on('addCable', () => {this.addCable(); this.isBeingAddedToCanvas = true;});
 
         EventBus.on('displayComponentProperties', (data: {id: number, type: string}) => {
 
@@ -158,10 +158,6 @@ export class canva extends Scene
             });
         });
 
-        EventBus.on('updateVlans' ,(vlans: string[]) => {
-            this.vlans = vlans;
-        });
-
         EventBus.on('saveRouterData', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], 
             identifier: string; message: string; hostname: string; rip: string;}) =>{
                 this.routers.forEach(router =>{
@@ -171,7 +167,15 @@ export class canva extends Scene
                     }         
                 });
         });
-        
+
+        EventBus.on('updateVlans' ,(vlans: string[]) => {
+            this.vlans = vlans;
+        });
+
+        EventBus.on('deleteComponent', (data: {x: number, y: number, obj: string, id: number}) => { 
+            this.deleteComponentFromMenu(data); 
+        });
+
         // Event listener for deleting a cable
         EventBus.on('confirmDeletion', () => {
             this.cables.forEach(cable => {
@@ -184,22 +188,41 @@ export class canva extends Scene
 
         EventBus.on('exportProject', () => {
             const json = this.buildJson();
-            
-            EventBus.emit('exportedProject', json); 
+            this.handleExportedProject(json);
+        });
 
+        EventBus.on('importProject', (data: NetworkData) => {
+            this.drawCanvasComponent(data);
+        });
+
+        EventBus.on('importAnyways', (data: NetworkData) => {
+            this.clearAllComponents();
+            this.drawCanvasComponent(data);
+        });
+
+        EventBus.on('importAndSave', async (data: NetworkData) => {
+            try {
+                const res = await this.handleExportedProject(this.buildJson());
+                if (res) {
+                    this.clearAllComponents();
+                    this.drawCanvasComponent(data);
+                }
+            } catch (error) {
+                console.error('Error handling exported project', error);
+            }
+        });
+
+        EventBus.on('checkProjectEmpty', () => {
+            const isEmpty = this.checkIfProjectIsEmpty();
+            EventBus.emit('projectEmptyCheckResult', isEmpty);
+        });
+
+        EventBus.on('fetchCommands', () => {
+            EventBus.emit('fetchedCommands', this.buildJson());
         });
 
         EventBus.on('showGrid', (val: boolean) => { 
             this.gridTileSprite.setVisible(val);
-        });
-
-        EventBus.on('saveWork', this.saveWorkspace.bind(this));
-
-        this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
-            if (event.ctrlKey && event.key === 's') {
-                event.preventDefault();
-                this.saveWorkspace();
-            }
         });
 
         this.input.on('wheel', (pointer: Phaser.Input.Pointer, gameObjects: Phaser.GameObjects.GameObject[], deltaX: number, deltaY: number) => {
@@ -216,27 +239,92 @@ export class canva extends Scene
 
         this.gridTileSprite = this.add.tileSprite(0, 0, this.cameras.main.width, this.cameras.main.height, 'gridTexture');
         this.gridTileSprite.setOrigin(0, 0);
-        this.openProject();
     }
 
-    private saveWorkspace(){
-        //handle export logic
+    /******************************************************************
+     * 
+                        ** EXPORT PROJECT**
+    ********************************************************************/
 
-        EventBus.emit('showAlert', 'Project saved successfully!');
-        setTimeout(() => {
-            EventBus.emit('hideAlert');
-        }, 3000);
-    }
-
-    private openProject(){
-        
-        // hanfle import logic
-
-        EventBus.emit('showAlert', 'Project loaded successfully');
-        setTimeout(() => {
-            EventBus.emit('hideAlert');
-        }, 3000);
+    private handleExportedProject = async (project: any) => {
+        const json = JSON.stringify(project, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
     
+        const initiateDownload = () => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'project.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        };
+    
+        if ('showSaveFilePicker' in window) {
+            try {
+                const options = {
+                    suggestedName: 'project.json',
+                    types: [
+                        {
+                            description: 'JSON Files',
+                            accept: { 'application/json': ['.json'] },
+                        },
+                    ],
+                };
+                // @ts-ignore
+                const fileHandle = await window.showSaveFilePicker(options);
+                const writable = await fileHandle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                return true; // indicate success
+            } catch (error: any) {
+                if (error.name !== 'AbortError') {
+                    console.error('Error saving file', error);
+                    throw error;
+                } else {
+                    return false; // indicate cancellation
+                }
+            }
+        } else {
+            // Fallback for browsers without the File System Access API
+            initiateDownload();
+            return true; // indicate success
+        }
+    };
+
+    private checkIfProjectIsEmpty = () => { 
+        return (
+            this.pc.length === 0 &&
+            this.switches.length === 0 &&
+            this.routers.length === 0 &&
+            this.cables.length === 0 &&
+            this.vlans.length === 0
+        );
+    };
+
+    private clearAllComponents() {
+        
+        for (const pc of this.pc) {
+            pc.destroy(); 
+        }
+        this.pc = [];
+
+        for (const sw of this.switches) {
+            sw.destroy();
+        }
+        this.switches = [];
+
+        for (const router of this.routers) {
+            router.destroy(); 
+        }
+        this.routers = [];
+
+        for (const cable of this.cables) {
+            cable.destroy(); 
+        }
+        this.cables = [];
+
+        // Clear VLANs
+        this.vlans = [];
     }
 
     /******************************************************************
@@ -889,26 +977,30 @@ export class canva extends Scene
             vlans: this.vlans
         };
 
-        console.log('buildJson', json);
+        console.log(json);
+
         return json;
     }
 
     private drawCanvasComponent(data: NetworkData) {
 
+        console.log('data to draw', data)
+
         data.pcs.forEach(pc => {
-            const pc_ = new Pc(this, pc.identifier, this.add.image(pc.x, pc.y, 'pc_component').setInteractive({ draggable: true, useHandCursor: true }));
+            const pc_ = new Pc(this, pc.identifier, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true, useHandCursor: true }));
+            pc_.image.setPosition(pc.x, pc.y);
             pc_.text.setPosition(pc.textx, pc.texty);
             pc_.identifier = pc.identifier;
             pc_.text.setText(pc.text);
             pc_.mask = pc.mask;
             pc_.ip = pc.ip;
             pc_.gateway = pc.gateway;
-            pc_.destroyDragbox();
             this.pc.push(pc_);
         });
 
         data.switches.forEach(switch_ => {
-            const switch__ = new Switch(this, switch_.identifier, this.add.image(switch_.x, switch_.y, 'switch_component').setInteractive({ draggable: true, useHandCursor: true }));
+            const switch__ = new Switch(this, switch_.identifier, this.add.image(0, 0, 'switch_component').setInteractive({ draggable: true, useHandCursor: true }));
+            switch__.image.setPosition(switch_.x, switch_.y);
             switch__.text.setPosition(switch_.textx, switch_.texty);
             switch__.identifier = switch_.identifier;
             switch__.text.setText(switch_.text);
@@ -922,12 +1014,12 @@ export class canva extends Scene
                 switch__.ports[index].mode = port.mode;
                 switch__.ports[index].vlan = port.vlan.id;
             });
-            switch__.destroyDragbox();
             this.switches.push(switch__);
         });
 
         data.routers.forEach(router => {
-            const router_ = new Router(this, router.identifier, this.add.image(router.x, router.y, 'router_component').setInteractive({ draggable: true, useHandCursor: true }));
+            const router_ = new Router(this, router.identifier, this.add.image(0, 0, 'router_component').setInteractive({ draggable: true, useHandCursor: true }));
+            router_.image.setPosition(router.x, router.y);
             router_.text.setPosition(router.textx, router.texty);
             router_.identifier = router.identifier;
             router_.text.setText(router.text);
@@ -948,62 +1040,65 @@ export class canva extends Scene
                     mask: dot1q.mask
                 }));
             });
-            router_.destroyDragbox();
             this.routers.push(router_);
         });
 
-        // Assign ports to the corresponding objects
-
-          // Assign connections to PC ports
+        // Assign connections to PC ports
         this.pc.forEach(pc => {
             data.pcs.forEach(pcData => {
-                this.switches.forEach(switch_ => {
-                    if (pcData.ports.object_id === switch_.identifier) {
-                        pc.ports[0] = switch_;
-                    }
-                });
+                if (pc.identifier === pcData.identifier) {
+                    this.switches.forEach(switch_ => {
+                        if (pcData.ports.object_id === switch_.identifier) {
+                            pc.ports[0] = switch_;
+                        }
+                    });
+                }
             });
         });
 
         // Assign connections to Switch ports
         this.switches.forEach(switch_ => {
             data.switches.forEach(switchData => {
-                switchData.ports.forEach((port, index) => {
-                    if (port.type === 'Pc') {
-                        this.pc.forEach(pc => {
-                            if (port.object_id === pc.identifier) {
-                                switch_.ports[index].object = pc;
-                            }
-                        });
-                    } else if (port.type === 'Router') {
-                        this.routers.forEach(router => {
-                            if (port.object_id === router.identifier) {
-                                switch_.ports[index].object = router;
-                            }
-                        });
-                    }
-                });
+                if (switch_.identifier === switchData.identifier) {
+                    switchData.ports.forEach((port, index) => {
+                        if (port.type === 'Pc') {
+                            this.pc.forEach(pc => {
+                                if (port.object_id === pc.identifier) {
+                                    switch_.ports[index].object = pc;
+                                }
+                            });
+                        } else if (port.type === 'Router') {
+                            this.routers.forEach(router => {
+                                if (port.object_id === router.identifier) {
+                                    switch_.ports[index].object = router;
+                                }
+                            });
+                        }
+                    });
+                }
             });
         });
 
         // Assign connections to Router ports
         this.routers.forEach(router => {
             data.routers.forEach(routerData => {
-                routerData.ports.forEach((port, index) => {
-                    if (port.type === 'Switch') {
-                        this.switches.forEach(switch_ => {
-                            if (port.object_id === switch_.identifier) {
-                                router.ports[index].object = switch_;
-                            }
-                        });
-                    } else if (port.type === 'Router') {
-                        this.routers.forEach(otherRouter => {
-                            if (port.object_id === otherRouter.identifier) {
-                                router.ports[index].object = otherRouter;
-                            }
-                        });
-                    }
-                });
+                if (router.identifier === routerData.identifier) {
+                    routerData.ports.forEach((port, index) => {
+                        if (port.type === 'Switch') {
+                            this.switches.forEach(switch_ => {
+                                if (port.object_id === switch_.identifier) {
+                                    router.ports[index].object = switch_;
+                                }
+                            });
+                        } else if (port.type === 'Router') {
+                            this.routers.forEach(otherRouter => {
+                                if (port.object_id === otherRouter.identifier) {
+                                    router.ports[index].object = otherRouter;
+                                }
+                            });
+                        }
+                    });
+                }
             });
         });
 
@@ -1014,6 +1109,7 @@ export class canva extends Scene
             
             if (startComponent && endComponent) {
                 const cable = new Cable(this, cableData.identifier, { x: cableData.startCoordinates.x, y: cableData.startCoordinates.y });
+                cable.toggleAnimations(this.cableAnimation);
                 cable.setStartComponent(startComponent);
                 cable.setEndComponent(endComponent);
                 cable.update()
@@ -1022,9 +1118,10 @@ export class canva extends Scene
         });
 
         this.vlans = data.vlans;
-        
-        //update the comands
-        EventBus.emit('getCommands', this.buildJson());
+
+        console.log('pcs', this.pc);
+
+        EventBus.emit('updateVlans', this.vlans);
     }
 
     private findComponentByIdentifierAndType(type: string | null, id: number | null): Pc | Switch | Router | null {
@@ -1037,9 +1134,10 @@ export class canva extends Scene
         }
         return null;
     }
+
 }
 
-interface NetworkData {
+export interface NetworkData {
     pcs: {
         x: number;
         y: number;
