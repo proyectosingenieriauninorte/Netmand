@@ -93,21 +93,21 @@ abstract class NetworkDevice {
         for (const [range, commands] of Object.entries(summarizedCommands)) {
             if (range.includes('-')) {
                 this.enterInterfaceRange(range);
-            }
 
-            commands.forEach(command => {
-                this.commands.push(command);
-            });
+                commands.forEach(command => {
+                    this.commands.push(command);
+                });
+            }
         }
 
         for (const [range, commands] of Object.entries(summarizedCommands)) {
             if (!range.includes('-')) {
                 this.enterInterface(range);
-            }
 
-            commands.forEach(command => {
-                this.commands.push(command);
-            });
+                commands.forEach(command => {
+                    this.commands.push(command);
+                });
+            }
         }
     }
 
