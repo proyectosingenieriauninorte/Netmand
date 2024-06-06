@@ -1,10 +1,10 @@
 'use client';
 import dynamic from 'next/dynamic';
-import { EventBus } from '@/canvas/EventBus';
 import { useRef, useEffect } from 'react';
 import { NetworkData } from '@/canvas/scenes/canva';
 
 const AppWithoutSSR = dynamic(() => import('./App'), { ssr: false });
+const EventBus = typeof window !== 'undefined' ? require('@/canvas/EventBus').EventBus : null;
 
 export default function Project() {
     const fileInputRef = useRef<HTMLInputElement>(null);
