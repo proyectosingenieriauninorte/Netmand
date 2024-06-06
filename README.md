@@ -36,10 +36,6 @@ Netmand aims to serve as a comprehensive tool that compiles all essential networ
 
 Additionally, Netmand addresses the issue of consistency in network configuration. By automating the command generation process based on user-selected options, it minimizes errors and ensures that configurations adhere to best practices. This not only aids students but also assists network administrators in quickly setting up and managing network devices, enhancing productivity and reducing the likelihood of misconfigurations.
 
-## Usage
-
-To get started with Netmand, the hosted version of the product can be used. You can get started immediately at http://172.174.226.42:8080/
-
 ## Development
 
 Alternatively, instead of using the hosted version of the product, Netmand can be run locally for contribution purposes.
