@@ -18,7 +18,7 @@ export class PC {
     }
 
     private setIpConfig() {
-        if (this._ip && this._mask && this._gateway) {
+        if (this._ip && this._mask) {
             if (this._gateway) {
                 this._commands.push(`ipconfig ${this._ip} ${this._mask} ${this._gateway}`);
             } else {

@@ -93,7 +93,15 @@ abstract class NetworkDevice {
         for (const [range, commands] of Object.entries(summarizedCommands)) {
             if (range.includes('-')) {
                 this.enterInterfaceRange(range);
-            } else {
+            }
+
+            commands.forEach(command => {
+                this.commands.push(command);
+            });
+        }
+
+        for (const [range, commands] of Object.entries(summarizedCommands)) {
+            if (!range.includes('-')) {
                 this.enterInterface(range);
             }
 
@@ -224,9 +232,13 @@ export class Router extends NetworkDevice {
     }
 
     private setRip() {
-        if (this._rip) {
+        if (this._rip.length) {
             this.commands.push("router rip");
-            this.commands.push(`network ${this._rip}`);
+            this.commands.push("version 2");
+            this.commands.push("no auto-summary");
+            this._rip.forEach((rip: string) => {
+                this.commands.push(`network ${rip}`);
+            });
         }
     }
 

@@ -45,7 +45,7 @@ const SwitchSettings: FC<SwitchPropertiesProps> = forwardRef((_, ref) => {
       setCurrentInterface(0); // Set the current interface to the first one when opening the dialog
     };
 
-    EventBus.on('showSwitchProperties', (data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]; identifier: number, 
+    EventBus.on('showSwitchProperties', (data: { ports: { object: Pc | Router | null; vlan: string; speed: string; duplex: string; description: string; status: string; mode: string }[]; identifier: number,
     message: string, hostname: string}) => {
       setSwitchProps({
         ports: data.ports,
@@ -143,7 +143,7 @@ const SwitchSettings: FC<SwitchPropertiesProps> = forwardRef((_, ref) => {
           Status
           <select value={port.status} onChange={(e) => handleInputChange(index, 'status', e.target.value)}>
             <option value="">Select Status</option>
-            <option value="auto">On</option>
+            <option value="on">On</option>
             <option value="half">Off</option>
           </select>
         </label>
@@ -167,15 +167,15 @@ const SwitchSettings: FC<SwitchPropertiesProps> = forwardRef((_, ref) => {
                 <input id='hostname' type="text" placeholder={switchProps.hostname} onChange={(e) => setSwitchProps({ ...switchProps, hostname: e.target.value })} />
               </div>
 
-            
+
               <div className='mb-2 text-xs color text-black flex'>
                 <div className='content-center mr-3'>
-                  Message 
+                  Message
                 </div>
                 <input id='message' type="text" placeholder={switchProps.message} onChange={(e) => setSwitchProps({ ...switchProps, message: e.target.value })} />
               </div>
             </div>
-            
+
 
             <div className='interfaceTittle'>
               <h3>Interface {currentInterface !== null ? currentInterface + 1 : ''} </h3>

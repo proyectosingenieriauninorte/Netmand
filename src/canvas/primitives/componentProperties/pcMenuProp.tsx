@@ -70,7 +70,7 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
         if (!validateMask(pcProps.mask)) {
             errors.push('Invalid Mask.');
         }
-        if (!validateGateway(pcProps.gateway)) {
+        if (pcProps.gateway && !validateGateway(pcProps.gateway)) {
             errors.push('Invalid Gateway.');
         }
 
