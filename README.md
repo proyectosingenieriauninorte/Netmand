@@ -36,7 +36,7 @@ Additionally, Netmand addresses the issue of consistency in network configuratio
 
 ## Usage
 
-To get started with Amplication, the hosted version of the product can be used. You can get started immediately at [netmand.com](http://172.174.226.42:8080/).
+To get started with Netmand, the hosted version of the product can be used. You can get started immediately at [netmand.com](http://172.174.226.42:8080/).
 
 ## Development
 
@@ -51,6 +51,7 @@ To be able to start development on Netmand, make sure that you have the followin
 - **Node.js**: You can download and install it from [nodejs.org](https://nodejs.org/).
 - **Docker**: You can download and install it from [docker.com](https://www.docker.com/).
 - **Git**: You can download and install it from [git-scm.com](https://git-scm.com/).
+</details>
 
 ### Running the Project with Docker
 
