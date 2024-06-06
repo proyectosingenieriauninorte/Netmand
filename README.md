@@ -13,6 +13,8 @@
     <img src="https://img.shields.io/github/contributors-anon/Torrex123/Netmand?color=yellow&style=flat-square" alt="contributors" style="height: 20px;">
 </p>
 
+![screenshot](https://github.com/Torrex123/Netmand/assets/92010526/8d57c78e-791a-4eec-b320-f86c2c0b180d)
+
 <p align="center">
   <a href="#overview">Overview</a> •
   <a href="#justification">Justification</a> •
