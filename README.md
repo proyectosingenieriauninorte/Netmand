@@ -38,7 +38,7 @@ Additionally, Netmand addresses the issue of consistency in network configuratio
 
 ## Usage
 
-To get started with Netmand, the hosted version of the product can be used. You can get started immediately at [netmand.com](http://172.174.226.42:8080/).
+To get started with Netmand, the hosted version of the product can be used. You can get started immediately at http://172.174.226.42:8080/
 
 ## Development
 
