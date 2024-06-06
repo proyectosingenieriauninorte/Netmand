@@ -91,7 +91,7 @@ abstract class NetworkDevice {
         }
 
         for (const [range, commands] of Object.entries(summarizedCommands)) {
-            if (range.includes('-')) {
+            if (range.includes('-') || range.includes(',')) {
                 this.enterInterfaceRange(range);
 
                 commands.forEach(command => {
@@ -101,7 +101,7 @@ abstract class NetworkDevice {
         }
 
         for (const [range, commands] of Object.entries(summarizedCommands)) {
-            if (!range.includes('-')) {
+            if (!range.includes('-') && !range.includes(',')) {
                 this.enterInterface(range);
 
                 commands.forEach(command => {
