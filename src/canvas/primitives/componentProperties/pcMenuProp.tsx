@@ -25,9 +25,24 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
         identifier: '',
         type: ''
     });
+    const [errorMessage, setErrorMessage] = useState<string>('');
+
+    const validateIP = (value: string) => {
+        const regex = /^(?:(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9]).){3}(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])$/;
+        return regex.test(value);
+    };
+
+    const validateMask = (value: string) => {
+        const regex = /^(255).(0|128|192|224|240|248|252|254|255).(0|128|192|224|240|248|252|254|255).(0|128|192|224|240|248|252|254|255)/;
+        return regex.test(value);
+    };
+
+    const validateGateway = (value: string) => {
+        return validateIP(value);
+    };
 
     useEffect(() => {
-        const showDialog = (data: { ip: string, mask: string, red: string, gateway: string, identifier: string, type:string}) => {
+        const showDialog = (data: { ip: string, mask: string, red: string, gateway: string, identifier: string, type: string }) => {
             setPcProps(data);
             setOpen(true);
         };
@@ -47,6 +62,24 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
     };
 
     const handleSaveChanges = () => {
+        const errors = [];
+
+        if (!validateIP(pcProps.ip)) {
+            errors.push('Invalid IP address.');
+        }
+        if (!validateMask(pcProps.mask)) {
+            errors.push('Invalid Mask.');
+        }
+        if (!validateGateway(pcProps.gateway)) {
+            errors.push('Invalid Gateway.');
+        }
+
+        if (errors.length > 0) {
+            setErrorMessage(errors.join(' '));
+            return;
+        }
+
+        setErrorMessage('');
         EventBus.emit('savePcData', pcProps);
         setOpen(false);
         EventBus.emit('showAlert', 'Changes saved successfully!');
@@ -63,7 +96,7 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
                     <Dialog.Content className="DialogContent">
                         <Dialog.Title className="DialogTitle">PC {pcProps.identifier} PROPERTIES</Dialog.Title>
                         <Dialog.Description className="DialogDescription">
-                        Make the desired changes in the text boxes.
+                            Make the desired changes in the text boxes.
                         </Dialog.Description>
 
                         <fieldset className="Fieldset">
@@ -96,10 +129,12 @@ const PcProperties: FC<PcPortMenuProps> = forwardRef((_, ref) => {
                             />
                         </fieldset>
 
+                        {errorMessage && (
+                            <div className="ErrorMessage">{errorMessage}</div>
+                        )}
+
                         <div style={{ display: 'flex', marginTop: 25, justifyContent: 'flex-end' }}>
-                            <Dialog.Close asChild>
-                                <button className="Button green" onClick={handleSaveChanges}>Save changes</button>
-                            </Dialog.Close>
+                            <button className="Button green" onClick={handleSaveChanges}>Save changes</button>
                         </div>
                         <Dialog.Close asChild>
                             <button className="IconButton" aria-label="Close">

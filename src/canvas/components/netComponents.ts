@@ -106,9 +106,6 @@ export class ImageManager{
             this.dragBox.x = dragX - this.image.width / 2;
             this.dragBox.y = dragY - this.image.height / 2;
             this.clickbox.setVisible(false);
-
-            console.log('image coordinates: ', imageGameObject.x, imageGameObject.y)
-            console.log('dragbox coordinates: ', this.dragBox.x, this.dragBox.y)
         }
     }
 
@@ -405,7 +402,7 @@ export class Router extends ImageManager {
     text: Phaser.GameObjects.Text; // Text object for displaying text below the image
     message: string = '';
     hostname: string = '';  
-    rip: string = '';
+    rip: [] = [];
     ports: {object: Switch| Router | null, 
         speed: string, 
         duplex: string,
@@ -439,7 +436,7 @@ export class Router extends ImageManager {
     }
 
     public updateProperties(data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: {vlan: string, ip: string, mask: string}[]}[], 
-        message: string, hostname: string, rip: string}) {
+        message: string, hostname: string, rip: []}) {
         this.ports = data.ports;
         this.message = data.message;
         this.hostname = data.hostname;

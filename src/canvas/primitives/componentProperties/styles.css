@@ -60,17 +60,7 @@ input {
   font-weight: 500;
   height: 35px;
 }
-.Button.violet {
-  background-color: white;
-  color: var(--violet-11);
-  box-shadow: 0 2px 10px var(--black-a7);
-}
-.Button.violet:hover {
-  background-color: var(--mauve-3);
-}
-.Button.violet:focus {
-  box-shadow: 0 0 0 2px black;
-}
+
 .Button.green {
   background-color: var(--green-4);
   color: var(--green-11);
@@ -109,40 +99,6 @@ input {
   margin-bottom: 15px;
 }
 
-.Label {
-  font-size: 15px;
-  color: var(--violet-11);
-  width: 90px;
-  text-align: right;
-}
-
-.Input {
-  width: 100%;
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  padding: 0 10px;
-  font-size: 15px;
-  line-height: 1;
-  color: var(--violet-11);
-  box-shadow: 0 0 0 1px var(--violet-7);
-  height: 35px;
-}
-.Input:focus {
-  box-shadow: 0 0 0 2px var(--violet-8);
-}
-
-@keyframes overlayShow {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 @keyframes contentShow {
   from {
     opacity: 0;
@@ -154,3 +110,8 @@ input {
   }
 }
 
+.ErrorMessage{
+  color: #ff0000;
+  font-size: 15px;
+  margin-top: 5px;
+}

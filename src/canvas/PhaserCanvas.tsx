@@ -8,11 +8,12 @@ import PcPortMenu from './primitives/contextMenu/pcPortsMenu';
 import SwitchPortMenu from './primitives/contextMenu/switchPortsMenu';
 import RouterPortMenu from './primitives/contextMenu/routerPortsMenu';
 import PcProperties from './primitives/componentProperties/pcMenuProp';
-import SwitchProperties from './primitives/componentProperties/switch & router/switchMenuProp';
-import RouterProperties from './primitives/componentProperties/switch & router/routerMenuProp';
 import ToolbarDemo from './primitives/toolbar/toolbar';
 import ImportAlert from './primitives/alertDialog/ImporAlert';
 import { SheetSide } from './primitives/sheet/sheet';
+
+import SwitchSettings from './primitives/componentProperties/switch/switchSettings';
+import RouterSettings from './primitives/componentProperties/router/routerSettings';
 
 export interface IRefPhaserGame {
     game: Phaser.Game | null;
@@ -130,8 +131,8 @@ export const PhaserGame = forwardRef<IRefPhaserGame, IProps>(function PhaserGame
                 {<SwitchPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchPortMenu */}
                 {<RouterPortMenu style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterPortMenu */}
                 {<PcProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render PcProperties */}
-                {<SwitchProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchProperties */}
-                {<RouterProperties style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterProperties */}
+                {<SwitchSettings style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SwitchSettings */}
+                {<RouterSettings style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render RouterProperties */}
                 {<ToolbarDemo style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render ToolbarDemo */}
                 {<SheetSide style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render SheetSide */}
                 {<ImportAlert style={{ position: 'absolute', pointerEvents: 'auto'}} />}{/* Conditionally render ImportAlert */}

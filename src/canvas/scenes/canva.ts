@@ -159,7 +159,7 @@ export class canva extends Scene
         });
 
         EventBus.on('saveRouterData', (data: { ports: { object: Switch | Router | null; speed: string; duplex: string; description: string; status: string; net: string; interface_ip: string; interface_mask: string; dot1q: { vlan: string; ip: string; mask: string }[] }[], 
-            identifier: string; message: string; hostname: string; rip: string;}) =>{
+            identifier: string; message: string; hostname: string; rip: [];}) =>{
                 this.routers.forEach(router =>{
                     if(router.identifier === parseInt(data.identifier)){
                         router.updateProperties(data)
@@ -257,6 +257,11 @@ export class canva extends Scene
             link.download = 'project.json';
             link.click();
             URL.revokeObjectURL(url);
+
+            EventBus.emit('showAlert', 'Project exported successfully.');
+            setTimeout(() => {
+                EventBus.emit('hideAlert');
+            }, 3000);
         };
     
         if ('showSaveFilePicker' in window) {
@@ -275,6 +280,7 @@ export class canva extends Scene
                 const writable = await fileHandle.createWritable();
                 await writable.write(blob);
                 await writable.close();
+                initiateDownload();
                 return true; // indicate success
             } catch (error: any) {
                 if (error.name !== 'AbortError') {
@@ -409,13 +415,13 @@ export class canva extends Scene
 
     private updateIdentifiers(components: (Pc | Switch | Router)[]) {
         components.forEach((component, index) => {
-            component.identifier = index; // Update the identifier
+            component.identifier = index; 
             if (component instanceof Pc) {
-                component.text.setText(`PC ${component.identifier}`); // Update the text for PCs
+                component.text.setText(`PC ${component.identifier}`); 
             } else if (component instanceof Switch) {
-                component.text.setText(`Switch ${component.identifier}`); // Update the text for Switches (assuming they have similar text handling)
+                component.text.setText(`Switch ${component.identifier}`); 
             } else if (component instanceof Router) {
-                component.text.setText(`Router ${component.identifier}`); // Update the text for Routers (assuming they have similar text handling)
+                component.text.setText(`Router ${component.identifier}`); 
             }
         });
     }
@@ -481,6 +487,11 @@ export class canva extends Scene
                 });
             }
         }
+
+        /*
+        If the startComponent is a Router, then we need to update the port availability
+        of the switch or Router it is connected to.
+        */
 
         if(startComponent instanceof Router){
             if(endComponent instanceof Switch){
@@ -977,14 +988,10 @@ export class canva extends Scene
             vlans: this.vlans
         };
 
-        console.log(json);
-
         return json;
     }
 
     private drawCanvasComponent(data: NetworkData) {
-
-        console.log('data to draw', data)
 
         data.pcs.forEach(pc => {
             const pc_ = new Pc(this, pc.identifier, this.add.image(0, 0, 'pc_component').setInteractive({ draggable: true, useHandCursor: true }));
@@ -1119,7 +1126,6 @@ export class canva extends Scene
 
         this.vlans = data.vlans;
 
-        console.log('pcs', this.pc);
 
         EventBus.emit('updateVlans', this.vlans);
     }
@@ -1206,7 +1212,7 @@ export interface NetworkData {
         }[];
         hostname: string;
         message: string;
-        rip: string;
+        rip: [];
     }[];
     cables: {
         startCoordinates: { x: number; y: number };
