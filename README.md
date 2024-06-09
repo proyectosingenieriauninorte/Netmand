@@ -116,7 +116,7 @@ This project can still be expanded to include many more functionalities. Here ar
 
 The initial version of Netmand has been developed by:
 
-- Edgar Torres Pérez
-- Juan Pablo Vargas Rodríguez
-- Joseph Venegas Banda 
-- Omar Cifuentes Laverde
+- Edgar Andres Torres Pérez: [Torrex123](https://github.com/Torrex123)
+- Juan Pablo Vargas Rodríguez: [VargasJuanP](https://github.com/VargasJuanP)
+- Joseph Venegas Banda: [venegasbjf](https://github.com/venegasbjf)
+- Omar Cifuentes Laverde: [OmarCifuentes](https://github.com/OmarCifuentes)
