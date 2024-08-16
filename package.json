@@ -22,7 +22,7 @@
         "typescript"
     ],
     "scripts": {
-        "dev": "next dev -p 8080",
+        "dev": "next dev -p 3000",
         "build": "next build"
     },
     "dependencies": {
