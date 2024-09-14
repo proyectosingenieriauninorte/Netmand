@@ -18,5 +18,3 @@ EXPOSE 5015
 
 # Command to run the application in development mode
 CMD ["npm", "run", "dev"]
-
-#Test deployment 2
