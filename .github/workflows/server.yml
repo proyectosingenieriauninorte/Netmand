@@ -1,26 +1,26 @@
 name: Deploy Server
 
 on:
-  push:
-    branches: [ main ]
+    push:
+        branches: [main]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+    build:
+        runs-on: ubuntu-latest
 
-    steps:       
-    - name: Deploy using ssh
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          cd /home/proyecto/Netmand/
-          git pull origin main
-          git status
-          docker stop netmand
-          docker rm netmand
-          docker build -t netmand-image .
-          docker run -dit -p 5015:3000 --restart unless-stopped --name netmand netmand-image
+        steps:
+            - name: Deploy using ssh
+              uses: appleboy/ssh-action@master
+              with:
+                  host: ${{ secrets.HOST }}
+                  username: ${{ secrets.USERNAME }}
+                  key: ${{ secrets.SSH_PRIVATE_KEY }}
+                  port: 22
+                  script: |
+                      cd /home/proyecto/Netmand/
+                      git pull origin main
+                      git status
+                      docker build -t netmand-image . || { echo "Failed to build Docker image"; exit 1; }
+                      docker stop netmand
+                      docker rm netmand
+                      docker run -dit -p 5015:3000 --restart unless-stopped --name netmand netmand-image || { echo "Failed to run Docker container"; exit 1; }
